@@ -86,16 +86,16 @@ export default function LandingPage() {
         <div className="relative mx-auto max-w-6xl px-4 pt-16 pb-20 sm:pt-24 sm:pb-28">
           {/* Logo */}
           <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Image
                 src="/logo.png"
                 alt="BodyPilot"
-                width={56}
-                height={56}
-                className="rounded-xl shadow-lg"
+                width={80}
+                height={80}
+                className="rounded-2xl shadow-lg"
               />
               <span
-                className="text-4xl sm:text-5xl font-bold text-primary"
+                className="text-5xl sm:text-6xl md:text-7xl font-bold text-primary"
                 style={{
                   fontFamily: '"Cinematografica", sans-serif',
                   letterSpacing: "0.1em",

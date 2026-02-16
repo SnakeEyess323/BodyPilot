@@ -5,7 +5,7 @@ import {
 } from "@polar-sh/sdk/webhooks";
 import { createClient } from "@supabase/supabase-js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line
 type SupabaseAdmin = any;
 
 // Webhook'lar için Supabase admin client (RLS bypass)

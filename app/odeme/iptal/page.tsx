@@ -56,7 +56,7 @@ export default function OdemeIptalPage() {
             className="w-full h-12 gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Dashboard'a Dön
+            Dashboard&apos;a Dön
           </Button>
         </div>
       </div>

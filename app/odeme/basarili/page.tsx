@@ -95,7 +95,7 @@ export default function OdemeBasariliPage() {
                   "bg-violet-600 hover:bg-violet-700 text-white"
                 )}
               >
-                Dashboard'a Git
+                Dashboard&apos;a Git
                 <ArrowRight className="h-4 w-4" />
               </Button>
               <Button

@@ -116,11 +116,11 @@ export default function LandingPage() {
 
           {/* Heading */}
           <h1 className="text-center text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground max-w-3xl mx-auto leading-tight">
-            Hedeflerine{" "}
+            BodyPilot ile hedefine{" "}
             <span className="bg-gradient-to-r from-violet-500 to-purple-500 bg-clip-text text-transparent">
-              Yapay Zeka
+              en kısa yoldan
             </span>{" "}
-            ile Ulaş
+            ulaş.
           </h1>
 
           {/* Subtitle */}

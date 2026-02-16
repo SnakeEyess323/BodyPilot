@@ -56,8 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase.auth]);
 
   const signOut = useCallback(async () => {
-    // Clean up any old unscoped localStorage keys before signing out
-    // so the next user never inherits stale data
+    // Clean up localStorage
     const CLEANUP_KEYS = [
       "spor-asistan-profil",
       "spor-asistan-haftalik-program",
@@ -72,11 +71,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { localStorage.removeItem(key); } catch { /* ignore */ }
     }
 
+    // Clear all Supabase-related items from localStorage
     try {
-      await supabase.auth.signOut();
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith("sb-") || key.includes("supabase"))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+    } catch { /* ignore */ }
+
+    // Clear all cookies related to Supabase
+    try {
+      document.cookie.split(";").forEach((c) => {
+        const name = c.trim().split("=")[0];
+        if (name.startsWith("sb-") || name.includes("supabase")) {
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        }
+      });
+    } catch { /* ignore */ }
+
+    // Call server-side signout to clear server cookies
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch { /* ignore */ }
+
+    // Use local scope so it works even if the token is expired
+    try {
+      await supabase.auth.signOut({ scope: "local" });
     } catch {
-      // Even if Supabase signOut fails, clear local state
+      // Even if Supabase signOut fails, we still redirect
     }
+
     setUser(null);
     window.location.href = "/giris";
   }, [supabase.auth]);

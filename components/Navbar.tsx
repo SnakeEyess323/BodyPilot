@@ -361,9 +361,8 @@ export default function Navbar() {
                   <>
                     <div className="my-1 border-t border-border" />
                     <button
-                      onClick={() => {
-                        setProfileOpen(false);
-                        signOut();
+                      onClick={async () => {
+                        await signOut();
                       }}
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-accent"
                     >
@@ -498,7 +497,7 @@ export default function Navbar() {
                 {user && (
                   <>
                     <div className="my-1 border-t border-border" />
-                    <button onClick={() => { setProfileOpen(false); signOut(); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-accent">
+                    <button onClick={async () => { await signOut(); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-accent">
                       <LogOut className="h-4 w-4" />
                       Çıkış Yap
                     </button>

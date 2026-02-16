@@ -542,12 +542,12 @@ export default function ChallengeDetailPage() {
                       const yesterday = new Date();
                       yesterday.setDate(yesterday.getDate() - 1);
                       const yesterdayStr = yesterday.toISOString().split("T")[0];
-                      let checkDate = sorted[0] === today ? today : sorted[0] === yesterdayStr ? yesterdayStr : null;
+                      let checkDate: string | null = sorted[0] === today ? today : sorted[0] === yesterdayStr ? yesterdayStr : null;
                       if (!checkDate) return 0;
                       for (const day of sorted) {
                         if (day === checkDate) {
                           streak++;
-                          const prev = new Date(checkDate);
+                          const prev: Date = new Date(checkDate);
                           prev.setDate(prev.getDate() - 1);
                           checkDate = prev.toISOString().split("T")[0];
                         }

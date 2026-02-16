@@ -26,6 +26,7 @@ export default function Navbar() {
 
   const programsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const profileMobileRef = useRef<HTMLDivElement>(null);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -44,9 +45,13 @@ export default function Navbar() {
         setProgramsOpen(false);
       }
 
-      if (profileOpen && profileRef.current && !profileRef.current.contains(target)) {
-        setProfileOpen(false);
-        setLangOpen(false);
+      if (profileOpen) {
+        const insideDesktop = profileRef.current && profileRef.current.contains(target);
+        const insideMobile = profileMobileRef.current && profileMobileRef.current.contains(target);
+        if (!insideDesktop && !insideMobile) {
+          setProfileOpen(false);
+          setLangOpen(false);
+        }
       }
     }
 
@@ -379,7 +384,7 @@ export default function Navbar() {
         {/* Mobile: Profile + Hamburger */}
         <div className="flex md:hidden items-center gap-2">
           {/* Mobile Profile Button */}
-          <div className="relative" ref={profileRef}>
+          <div className="relative" ref={profileMobileRef}>
             {user ? (
               <button
                 type="button"

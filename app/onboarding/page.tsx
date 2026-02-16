@@ -69,7 +69,7 @@ export default function OnboardingPage() {
     if (step < TOPLAM_ONBOARDING_ADIM) setStep(step + 1);
     else {
       setProfil({ ...profil, onboardingCompleted: true });
-      router.push("/giris");
+      router.push("/dashboard");
     }
   };
 

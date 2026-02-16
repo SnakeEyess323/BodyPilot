@@ -58,8 +58,8 @@ export default function Navbar() {
     "rounded px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground";
   const navLinkActive = "bg-accent text-foreground";
 
-  // Don't render navbar on auth pages
-  if (pathname === "/giris" || pathname === "/kayit") {
+  // Don't render navbar on landing and auth pages
+  if (pathname === "/" || pathname === "/giris" || pathname === "/kayit") {
     return null;
   }
 

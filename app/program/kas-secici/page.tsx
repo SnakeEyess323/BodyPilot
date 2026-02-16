@@ -223,6 +223,27 @@ export default function KasSeciciPage() {
               </p>
             </div>
 
+            {/* Action Buttons - top */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Link
+                href={`/program/egzersizler?muscles=${selectedMuscles.join(",")}`}
+                className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-primary bg-transparent px-8 py-4 font-semibold text-primary transition-all duration-300 hover:bg-primary/10 hover:shadow-lg"
+              >
+                <Dumbbell className="w-5 h-5" />
+                {pt.viewAllExercises}
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+
+              <Link
+                href={`/program/antrenman`}
+                className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-10 py-4 font-semibold text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/25"
+              >
+                <Sparkles className="w-5 h-5" />
+                {pt.createProgram}
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+
             {Object.entries(exercisesByMuscle).map(([muscleId, { muscle, exercises }]) => (
               <div key={muscleId}>
                 {/* Muscle group header */}
@@ -247,27 +268,6 @@ export default function KasSeciciPage() {
                 </div>
               </div>
             ))}
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
-              <Link
-                href={`/program/egzersizler?muscles=${selectedMuscles.join(",")}`}
-                className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-primary bg-transparent px-8 py-4 font-semibold text-primary transition-all duration-300 hover:bg-primary/10 hover:shadow-lg"
-              >
-                <Dumbbell className="w-5 h-5" />
-                {pt.viewAllExercises}
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Link>
-
-              <Link
-                href={`/program/antrenman`}
-                className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-10 py-4 font-semibold text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/25"
-              >
-                <Sparkles className="w-5 h-5" />
-                {pt.createProgram}
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
           </motion.div>
         ) : (
           <motion.div

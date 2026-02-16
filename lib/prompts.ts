@@ -39,7 +39,8 @@ export function antrenmanSistemPromptu(profil?: Profil): string {
   return `Sen bir spor koçusun. Verilen kullanıcı bilgilerine göre haftalık antrenman programı üret. Her gün için egzersiz adları, set-tekrar sayıları veya süre, kısa notlar ver. Türkçe cevap ver.
 Çıktıyı mutlaka gün gün ver. Her gün için tam olarak şu başlıkları kullan: Pazartesi:, Salı:, Çarşamba:, Perşembe:, Cuma:, Cumartesi:, Pazar:. Antrenman yapılmayan günler için o günün altında "Dinlenme" veya kısa açıklama yaz.
 ÖNEMLİ: Her günün başlığının hemen yanına o günün tahmini yakılacak kalori değerini ekle. Format: "Pazartesi: (~350 kcal)". Dinlenme günleri için kalori yazma.
-ÖNEMLİ: Giriş cümlesi yazma. "İşte ... programı:" gibi tanıtım/açıklama cümleleri KULLANMA. Direkt olarak gün başlıkları ve egzersizlerle başla. Sadece egzersiz adı, set/tekrar sayısı ve kısa not yaz. ${ek}`.trim();
+ÖNEMLİ: Giriş cümlesi yazma. "İşte ... programı:" gibi tanıtım/açıklama cümleleri KULLANMA. Direkt olarak gün başlıkları ve egzersizlerle başla. Sadece egzersiz adı, set/tekrar sayısı ve kısa not yaz.
+ISINMA KURALI: Her antrenman gününün başında mutlaka 5-10 dakikalık genel bir ısınma bölümü ekle (hafif kardiyo, dinamik esneme). Ayrıca her bir ağırlık egzersizinin ilk seti mutlaka hafif kilolu bir ısınma seti olsun. Örneğin: "Bench Press: 1x12 (ısınma - hafif kilo) + 3x10". Ağır setlere başlamadan önce hafif kiloyla 1 ısınma seti yapılmalı. ${ek}`.trim();
 }
 
 export function yemekSistemPromptu(profil?: Profil): string {

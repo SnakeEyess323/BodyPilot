@@ -50,12 +50,18 @@ export function ProfilProvider({ children }: { children: ReactNode }) {
 
     // Load from user-scoped localStorage (fast)
     const localData = getUserStorageJSON<Profil>(STORAGE_KEY, user.id);
+    let localProfil = defaultProfil;
     if (localData && typeof localData === "object") {
-      setProfilState({ ...defaultProfil, ...localData });
+      localProfil = { ...defaultProfil, ...localData };
+      setProfilState(localProfil);
     }
-    setIsLoaded(true);
 
-    // Then fetch fresh data from Supabase and merge with local
+    // If localStorage already has onboardingCompleted, we can trust it immediately
+    if (localProfil.onboardingCompleted === true) {
+      setIsLoaded(true);
+    }
+
+    // Always fetch from Supabase to get the authoritative data
     getUserData<Profil>(STORAGE_KEY).then((remoteData) => {
       if (remoteData && typeof remoteData === "object") {
         setProfilState((prev) => {
@@ -68,6 +74,11 @@ export function ProfilProvider({ children }: { children: ReactNode }) {
           return merged;
         });
       }
+      // Mark as loaded only after Supabase check completes
+      setIsLoaded(true);
+    }).catch(() => {
+      // If Supabase fetch fails, still mark as loaded with local data
+      setIsLoaded(true);
     });
   }, [user]);
 

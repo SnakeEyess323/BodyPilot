@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfil } from "@/context/ProfilContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { profilTamamlandi } from "@/lib/onboarding";
 import type { Profil } from "@/lib/types";
 import ChipSelector from "@/components/ui/chip-selector";
 import { Button } from "@/components/ui/button";
@@ -50,9 +51,21 @@ function getStepCanProceed(step: OnboardingStep, profil: Profil): boolean {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { profil, setProfil } = useProfil();
+  const { profil, setProfil, isLoaded } = useProfil();
   const { t } = useLanguage();
   const [step, setStep] = useState(1);
+
+  // If onboarding already completed, redirect to dashboard immediately
+  useEffect(() => {
+    if (isLoaded && profilTamamlandi(profil)) {
+      router.replace("/dashboard");
+    }
+  }, [isLoaded, profil, router]);
+
+  // Don't render the form if already completed
+  if (isLoaded && profilTamamlandi(profil)) {
+    return null;
+  }
 
   const currentStep = ONBOARDING_STEPS[step - 1];
   const update = (key: keyof Profil, value: unknown) => {

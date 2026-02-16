@@ -36,8 +36,16 @@ export default function OnboardingGuard({ children }: { children: ReactNode }) {
       return;
     }
 
+    const completed = profilTamamlandi(profil);
+
+    // If onboarding is completed but user is on /onboarding, send to dashboard
+    if (completed && pathname === "/onboarding") {
+      router.replace("/dashboard");
+      return;
+    }
+
     // If logged in but onboarding not completed, redirect to onboarding
-    if (!profilTamamlandi(profil) && pathname !== "/onboarding") {
+    if (!completed && pathname !== "/onboarding") {
       router.replace("/onboarding");
       return;
     }

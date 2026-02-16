@@ -35,7 +35,13 @@ export default function OnboardingGuard({ children }: { children: ReactNode }) {
       router.replace("/giris");
       return;
     }
-  }, [authLoading, isLoaded, pathname, router, user]);
+
+    // If logged in but onboarding not completed, redirect to onboarding
+    if (!profilTamamlandi(profil) && pathname !== "/onboarding") {
+      router.replace("/onboarding");
+      return;
+    }
+  }, [authLoading, isLoaded, pathname, profil, router, user]);
 
   return <>{children}</>;
 }

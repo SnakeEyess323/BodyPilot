@@ -26,20 +26,16 @@ export default function OnboardingGuard({ children }: { children: ReactNode }) {
     // Wait for both auth and profil to load
     if (authLoading || !isLoaded) return;
 
-    // Don't redirect on auth pages
+    // Don't redirect on auth pages or landing page
     if (AUTH_PATHS.some((p) => pathname?.startsWith(p))) return;
+    if (pathname === "/") return;
 
     // If not logged in, redirect to login
     if (!user) {
       router.replace("/giris");
       return;
     }
-
-    // If logged in but onboarding not completed, redirect to onboarding
-    if (pathname === "/onboarding") return;
-    if (profilTamamlandi(profil)) return;
-    router.replace("/onboarding");
-  }, [authLoading, isLoaded, pathname, profil, router, user]);
+  }, [authLoading, isLoaded, pathname, router, user]);
 
   return <>{children}</>;
 }

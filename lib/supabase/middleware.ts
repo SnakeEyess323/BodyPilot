@@ -52,7 +52,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Public routes that don't require authentication
-  const publicPaths = ["/", "/onboarding", "/giris", "/kayit", "/auth/callback", "/fiyatlandirma", "/odeme", "/api/polar/webhook"];
+  const publicPaths = ["/", "/giris", "/kayit", "/auth/callback", "/fiyatlandirma", "/odeme", "/api/polar/webhook"];
   const isPublicPath = request.nextUrl.pathname === "/" || publicPaths.some((path) =>
     path !== "/" && request.nextUrl.pathname.startsWith(path)
   );
@@ -64,8 +64,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If user is logged in and trying to access public auth pages, redirect to dashboard
-  if (user && (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/onboarding" || request.nextUrl.pathname === "/giris" || request.nextUrl.pathname === "/kayit")) {
+  // If user is logged in and trying to access login/register, redirect to dashboard
+  if (user && (request.nextUrl.pathname === "/giris" || request.nextUrl.pathname === "/kayit")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

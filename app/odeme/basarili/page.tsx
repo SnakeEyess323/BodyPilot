@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle, Crown, ArrowRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/SubscriptionContext"
 
-export default function OdemeBasariliPage() {
+function OdemeBasariliContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const checkoutId = searchParams.get("checkout_id")
@@ -15,8 +15,6 @@ export default function OdemeBasariliPage() {
   const [isVerifying, setIsVerifying] = useState(true)
 
   useEffect(() => {
-    // Kısa bir süre bekle ve kullanıcı verilerini yenile
-    // Webhook'un işlenmesi için zaman tanı
     const timer = setTimeout(async () => {
       await refreshUsage()
       setIsVerifying(false)
@@ -110,5 +108,19 @@ export default function OdemeBasariliPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function OdemeBasariliPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+          <Loader2 className="h-10 w-10 text-violet-600 animate-spin" />
+        </div>
+      }
+    >
+      <OdemeBasariliContent />
+    </Suspense>
   )
 }

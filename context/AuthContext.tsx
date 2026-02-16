@@ -72,11 +72,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { localStorage.removeItem(key); } catch { /* ignore */ }
     }
 
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Even if Supabase signOut fails, clear local state
+    }
     setUser(null);
-    router.push("/giris");
-    router.refresh();
-  }, [supabase.auth, router]);
+    window.location.href = "/giris";
+  }, [supabase.auth]);
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>

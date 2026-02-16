@@ -406,13 +406,13 @@ export default function AsistanPage() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-80px)] max-w-3xl flex-col px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+    <div className="mx-auto flex h-[calc(100dvh-4rem)] max-w-3xl flex-col px-4 py-4 sm:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
           {t.assistant.title}
         </h1>
         {!isPro && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
             <span>
               {remainingAiMessages > 0
                 ? `${remainingAiMessages}/${3 + adBonuses.ai * 3} mesaj kaldı`
@@ -446,8 +446,8 @@ export default function AsistanPage() {
       />
       
       {/* Chat Messages Container */}
-      <div className="flex flex-1 flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+      <div className="flex flex-1 flex-col rounded-xl border border-border bg-card shadow-sm overflow-hidden min-h-0">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-3 sm:p-4 break-words">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
               <motion.button
@@ -510,7 +510,7 @@ export default function AsistanPage() {
       </div>
 
       {/* Morphing AI Input Panel */}
-      <div className="flex items-center justify-center pt-6">
+      <div className="flex items-center justify-center pt-3 sm:pt-6">
         <motion.div
           ref={wrapperRef}
           className={cx(
@@ -578,14 +578,14 @@ export default function AsistanPage() {
                     <span className="text-foreground font-medium text-sm">{t.assistant.bodypilotAI}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <kbd className="text-muted-foreground text-xs border border-border rounded px-1.5 py-0.5">
+                    <kbd className="hidden sm:inline text-muted-foreground text-xs border border-border rounded px-1.5 py-0.5">
                       {t.assistant.enter}
                     </kbd>
-                    <span className="text-muted-foreground text-xs">{t.assistant.sendHint}</span>
+                    <span className="hidden sm:inline text-muted-foreground text-xs">{t.assistant.sendHint}</span>
                     <button
                       type="button"
                       onClick={triggerClose}
-                      className="ml-2 p-1 rounded-full hover:bg-muted transition"
+                      className="ml-1 sm:ml-2 p-1 rounded-full hover:bg-muted transition"
                     >
                       <X className="h-4 w-4 text-muted-foreground" />
                     </button>
@@ -606,7 +606,7 @@ export default function AsistanPage() {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="hidden sm:block text-xs text-muted-foreground">
                     {t.assistant.shiftEnter}
                   </p>
                   <button

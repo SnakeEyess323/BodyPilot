@@ -246,12 +246,12 @@ export default function ChallengeDetailPage() {
       </Link>
 
       {/* Header */}
-      <div className="relative mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-500/10 via-rose-500/10 to-violet-500/10 border border-orange-500/20 p-6">
-        <div className="flex items-start gap-4">
-          <span className="text-5xl">{challenge.icon}</span>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-foreground">
+      <div className="relative mb-6 sm:mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-500/10 via-rose-500/10 to-violet-500/10 border border-orange-500/20 p-4 sm:p-6">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <span className="text-4xl sm:text-5xl">{challenge.icon}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                 {title}
               </h1>
               {isCustom && (
@@ -337,11 +337,11 @@ export default function ChallengeDetailPage() {
       )}
 
       {/* Two-column layout: Main + Leaderboard sidebar */}
-      <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8">
         {/* LEFT COLUMN: Main content */}
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Countdown / Status */}
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             {/* Days Counter */}
             <div className="rounded-xl border border-border bg-card p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -390,7 +390,7 @@ export default function ChallengeDetailPage() {
             </div>
 
             {/* My Rank */}
-            <div className="rounded-xl border border-border bg-card p-4 text-center">
+            <div className="rounded-xl border border-border bg-card p-4 text-center col-span-2 sm:col-span-1">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Trophy className="h-5 w-5 text-violet-500" />
               </div>
@@ -528,7 +528,7 @@ export default function ChallengeDetailPage() {
               </div>
 
               {/* Daily Streak & Stats */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
                 {/* Current Streak */}
                 <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-3 text-center">
                   <div className="flex items-center justify-center mb-1">

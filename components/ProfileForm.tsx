@@ -1,6 +1,6 @@
 "use client";
 
-import type { Profil } from "@/lib/types";
+import type { Profil, HedefProfil } from "@/lib/types";
 
 interface ProfileFormProps {
   profil: Profil;
@@ -86,7 +86,7 @@ export default function ProfileForm({ profil, onChange, compact }: ProfileFormPr
             { value: "kondisyon_artirmak", label: "Kondisyon artırmak" },
             { value: "genel_saglikli_yasam", label: "Genel sağlıklı yaşam" },
           ].map((option) => {
-            const selected = Array.isArray(profil.hedef) && profil.hedef.includes(option.value);
+            const selected = Array.isArray(profil.hedef) && profil.hedef.includes(option.value as HedefProfil);
             return (
               <button
                 key={option.value}

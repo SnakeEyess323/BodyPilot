@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openai, hasOpenAIKey } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 
 const MAX_BODY = 10 * 1024;
 
@@ -23,7 +23,8 @@ JSON formatı (başka hiçbir şey yazma):
 Sadece yukarıdaki JSON formatında cevap ver. Markdown veya açıklama ekleme.`;
 
 export async function POST(request: NextRequest) {
-  if (!hasOpenAIKey() || !openai) {
+  const openai = getOpenAI();
+  if (!openai) {
     return NextResponse.json(
       { error: "OpenAI API anahtarı yapılandırılmamış." },
       { status: 500 }

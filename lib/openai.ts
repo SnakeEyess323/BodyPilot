@@ -1,12 +1,13 @@
 import OpenAI from "openai";
 
-function getOpenAIClient(): OpenAI | null {
+export function getOpenAI(): OpenAI | null {
   const key = process.env.OPENAI_API_KEY;
   if (!key || key === "sk-...") return null;
   return new OpenAI({ apiKey: key });
 }
 
-export const openai = getOpenAIClient();
+// Keep backward compatibility
+export const openai = getOpenAI();
 
 export function hasOpenAIKey(): boolean {
   const key = process.env.OPENAI_API_KEY;

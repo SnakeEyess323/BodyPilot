@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openai, hasOpenAIKey } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { chatSistemPromptu } from "@/lib/prompts";
 import type { ChatRequest } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
@@ -8,7 +8,8 @@ import { checkDailyAiLimit, logUsage } from "@/lib/subscription/check-usage";
 const MAX_BODY = 30 * 1024; // Artırıldı: kullanıcı bağlamı daha fazla veri taşıyor
 
 export async function POST(request: NextRequest) {
-  if (!hasOpenAIKey() || !openai) {
+  const openai = getOpenAI();
+  if (!openai) {
     return NextResponse.json(
       { error: "OpenAI API anahtarı yapılandırılmamış." },
       { status: 500 }

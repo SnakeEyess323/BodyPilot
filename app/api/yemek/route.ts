@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openai, hasOpenAIKey } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { yemekSistemPromptu } from "@/lib/prompts";
 import type { YemekRequest } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
@@ -8,7 +8,8 @@ import { checkWeeklyMealLimit, logUsage } from "@/lib/subscription/check-usage";
 const MAX_BODY = 10 * 1024;
 
 export async function POST(request: NextRequest) {
-  if (!hasOpenAIKey() || !openai) {
+  const openai = getOpenAI();
+  if (!openai) {
     return NextResponse.json(
       { error: "OpenAI API anahtarı yapılandırılmamış." },
       { status: 500 }

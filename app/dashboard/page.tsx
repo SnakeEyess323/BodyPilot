@@ -20,7 +20,7 @@ import {
 import { Trophy, Flame, ChevronRight, Zap, Target } from "lucide-react";
 
 export default function DashboardPage() {
-  const { program } = useHaftalikProgram();
+  const { program, displayProgram, isTranslating } = useHaftalikProgram();
   const { content: yemekContent } = useYemekProgram();
   const { t, language } = useLanguage();
   const { challenges, myParticipations } = useChallenge();
@@ -164,6 +164,8 @@ export default function DashboardPage() {
         {hasWorkoutProgram ? (
           <WorkoutStickyNotes
             program={program}
+            displayProgram={displayProgram}
+            isTranslating={isTranslating}
             onComplete={() => setHistoryRefresh((c) => c + 1)}
           />
         ) : (

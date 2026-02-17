@@ -644,6 +644,7 @@ export const translations = {
       workoutsCompleted: "tamamlandı",
       perfectWeek: "Mükemmel Hafta!",
       restDayMessage: "Bu gün dinlenme günü. Program dışı yaptığın sporu buraya ekleyebilirsin.",
+      translatingProgram: "Program çevriliyor...",
       autoCalorie: "Kalori otomatik hesaplanır",
       extraExercisePlaceholder: "Örn: Koşu 30 dk, Şınav 3 set...",
       
@@ -1404,6 +1405,7 @@ export const translations = {
       workoutsCompleted: "completed",
       perfectWeek: "Perfect Week!",
       restDayMessage: "This is a rest day. You can add any exercise you did outside the program here.",
+      translatingProgram: "Translating program...",
       autoCalorie: "Calories calculated automatically",
       extraExercisePlaceholder: "E.g.: Running 30 min, Push-ups 3 sets...",
       
@@ -2164,6 +2166,7 @@ export const translations = {
       workoutsCompleted: "abgeschlossen",
       perfectWeek: "Perfekte Woche!",
       restDayMessage: "Dies ist ein Ruhetag. Sie können hier jede Übung hinzufügen, die Sie außerhalb des Programms gemacht haben.",
+      translatingProgram: "Programm wird übersetzt...",
       autoCalorie: "Kalorien werden automatisch berechnet",
       extraExercisePlaceholder: "Z.B.: Laufen 30 Min., Liegestütze 3 Sätze...",
       
@@ -2905,6 +2908,7 @@ export const translations = {
       workoutsCompleted: "завершено",
       perfectWeek: "Идеальная неделя!",
       restDayMessage: "Это день отдыха. Вы можете добавить сюда любое упражнение, которое выполнили вне программы.",
+      translatingProgram: "Программа переводится...",
       autoCalorie: "Калории рассчитываются автоматически",
       extraExercisePlaceholder: "Напр.: Бег 30 мин, Отжимания 3 подхода...",
       

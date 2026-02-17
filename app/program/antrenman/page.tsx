@@ -21,7 +21,7 @@ import { UpgradeModal } from "@/components/ui/upgrade-modal";
 
 export default function AntrenmanPage() {
   const { profil, setProfil, isLoaded } = useProfil();
-  const { program, setProgram } = useHaftalikProgram();
+  const { program, displayProgram, isTranslating, setProgram } = useHaftalikProgram();
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const { t, language } = useLanguage();
@@ -82,14 +82,14 @@ export default function AntrenmanPage() {
       setPendingCopyProgram(weekProgram);
       setShowCopyConfirm(true);
     } else {
-      setProgram(weekProgram as HaftalikProgram);
+      setProgram(weekProgram as HaftalikProgram, language as "tr" | "en" | "de" | "ru");
       setHistoryRefresh((c) => c + 1);
     }
-  }, [hasWorkoutProgram, setProgram]);
+  }, [hasWorkoutProgram, setProgram, language]);
 
   function applyCopyWeek() {
     if (pendingCopyProgram) {
-      setProgram(pendingCopyProgram as HaftalikProgram);
+      setProgram(pendingCopyProgram as HaftalikProgram, language as "tr" | "en" | "de" | "ru");
       setHistoryRefresh((c) => c + 1);
     }
     setShowCopyConfirm(false);
@@ -129,7 +129,7 @@ export default function AntrenmanPage() {
       }
       const text = data.content || "";
       const { program: parsed, kaloriler } = parseProgramToDays(text);
-      setProgram(parsed);
+      setProgram(parsed, language as "tr" | "en" | "de" | "ru");
       if (userId) {
         saveKaloriler(userId, kaloriler);
         saveCurrentWeekToHistory(userId);
@@ -244,6 +244,8 @@ export default function AntrenmanPage() {
         <div className="mb-10 space-y-6">
           <WorkoutStickyNotes
             program={program}
+            displayProgram={displayProgram}
+            isTranslating={isTranslating}
             onComplete={() => setHistoryRefresh((c) => c + 1)}
           />
           <AntrenmanGecmis refreshTrigger={historyRefresh} onCopyWeek={handleCopyWeek} />

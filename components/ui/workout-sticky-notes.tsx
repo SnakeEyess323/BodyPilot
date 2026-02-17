@@ -29,6 +29,8 @@ interface WorkoutDay {
 
 interface WorkoutStickyNotesProps {
   program: Record<GunAdi, string>;
+  displayProgram?: Record<GunAdi, string>;
+  isTranslating?: boolean;
   onComplete?: (gun: GunAdi) => void;
   className?: string;
 }
@@ -140,7 +142,9 @@ function getWeekKey(): string {
   return `${now.getFullYear()}-W${weekNumber}`;
 }
 
-export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, className }: WorkoutStickyNotesProps) {
+export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp, isTranslating: isTranslatingProp, onComplete: onCompleteProp, className }: WorkoutStickyNotesProps) {
+  // Use displayProgram for visual display, program for editing/data operations
+  const shownProgram = displayProgramProp || program;
   const { t, language } = useLanguage();
   const { completeWorkout } = useGamification();
   const { setGun } = useHaftalikProgram();
@@ -185,15 +189,15 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
 
   const todayGun = useMemo(() => getTodayGunAdi(), []);
 
-  // Antrenman günlerini hazırla
+  // Antrenman günlerini hazırla (display uses translated content)
   const workoutDays = useMemo((): WorkoutDay[] => {
     return gunSirasi.map((gun) => ({
       gun,
-      content: program[gun] || "",
+      content: shownProgram[gun] || "",
       completed: completedDays.includes(gun),
       kalori: kaloriler[gun],
     }));
-  }, [gunSirasi, program, completedDays, kaloriler]);
+  }, [gunSirasi, shownProgram, completedDays, kaloriler]);
 
   // Tamamlanan antrenman sayısı
   const completedCount = useMemo(
@@ -230,31 +234,28 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
     setSelectedDay((prev) => prev ? { ...prev, kalori: estimated > 0 ? estimated : undefined } : null);
   }, [profil.kilo, userId]);
 
-  // Satır silme
+  // Satır silme (edits visible content)
   const handleDeleteLine = useCallback((gun: GunAdi, lineIndex: number) => {
-    const currentContent = program[gun] || "";
+    const currentContent = shownProgram[gun] || "";
     const lines = currentContent.split("\n").filter((l) => l.trim() !== "");
     lines.splice(lineIndex, 1);
     const newContent = lines.join("\n");
     setGun(gun, newContent);
     setSelectedDay((prev) => prev ? { ...prev, content: newContent } : null);
-    // Kaloriyi yeniden hesapla
     updateKalori(gun, newContent);
-  }, [program, setGun, updateKalori]);
+  }, [shownProgram, setGun, updateKalori]);
 
-  // Satır ekleme
+  // Satır ekleme (adds to visible content)
   const handleAddLine = useCallback((gun: GunAdi, text: string) => {
     if (!text.trim()) return;
-    const currentContent = program[gun] || "";
-    // Eger icerik "Dinlenme", "rest" vs. ise once temizle
+    const currentContent = shownProgram[gun] || "";
     const cleanedCurrent = isRestDay(currentContent) ? "" : currentContent;
     const newContent = cleanedCurrent ? `${cleanedCurrent}\n${text.trim()}` : text.trim();
     setGun(gun, newContent);
     setSelectedDay((prev) => prev ? { ...prev, content: newContent } : null);
     setNewExercise("");
-    // Kaloriyi yeniden hesapla
     updateKalori(gun, newContent);
-  }, [program, setGun, updateKalori]);
+  }, [shownProgram, setGun, updateKalori]);
 
   // Antrenmanı tamamla
   const handleComplete = useCallback((gun: GunAdi) => {
@@ -282,7 +283,7 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
     onCompleteProp?.(gun);
   }, [userId, completeWorkout, onCompleteProp]);
 
-  // Program boşsa
+  // Program boşsa (check original program)
   const hasProgram = useMemo(
     () => Object.values(program).some((v) => v && v.trim() !== ""),
     [program]
@@ -301,6 +302,16 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
 
   return (
     <div className={cn("space-y-4", className)}>
+      {/* Translating indicator */}
+      {isTranslatingProp && (
+        <div className="flex items-center gap-2 rounded-lg bg-sky-500/10 border border-sky-500/20 px-4 py-2.5 animate-pulse">
+          <div className="h-4 w-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-sky-600 dark:text-sky-400 font-medium">
+            {t.extra.translatingProgram || "Translating program..."}
+          </span>
+        </div>
+      )}
+
       {/* Haftalık özet */}
       <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-sky-500/10 via-cyan-500/10 to-teal-500/10 border border-sky-500/20 p-4">
         <div className="flex items-center gap-3">

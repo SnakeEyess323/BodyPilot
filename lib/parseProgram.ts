@@ -21,10 +21,29 @@ const GUN_SIRASI: GunAdi[] = [
   "Pazar",
 ];
 
+// All day name variants mapped to Turkish GunAdi index (0=Pazartesi..6=Pazar)
+const DAY_NAME_VARIANTS: Record<string, number> = {
+  // Turkish
+  pazartesi: 0, salı: 1, çarşamba: 2, perşembe: 3, cuma: 4, cumartesi: 5, pazar: 6,
+  // English
+  monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6,
+  // German
+  montag: 0, dienstag: 1, mittwoch: 2, donnerstag: 3, freitag: 4, samstag: 5, sonntag: 6,
+  // Russian
+  "понедельник": 0, "вторник": 1, "среда": 2, "четверг": 3, "пятница": 4, "суббота": 5, "воскресенье": 6,
+};
+
+const ALL_DAY_NAMES = Object.keys(DAY_NAME_VARIANTS).join("|");
 const GUN_PATTERN = new RegExp(
-  `(Pazartesi|Salı|Çarşamba|Perşembe|Cuma|Cumartesi|Pazar)\\s*:\\s*`,
+  `(${ALL_DAY_NAMES})\\s*:\\s*`,
   "gi"
 );
+
+function mapDayNameToGunAdi(dayName: string): GunAdi | null {
+  const idx = DAY_NAME_VARIANTS[dayName.toLowerCase()];
+  if (idx === undefined) return null;
+  return GUN_SIRASI[idx];
+}
 
 // Kalori degerini gunun basligindan veya iceriginden parse eder
 // Ornek: "(~350 kcal)" veya "~350 kcal" veya "350 kcal"
@@ -65,10 +84,10 @@ function cleanDayContent(content: string): string {
     const trimmed = line.trim();
     // Boş satırları atla (egzersiz bulunmadan önce)
     if (!trimmed && !foundExercise) continue;
-    // Giriş cümlelerini atla
-    if (!foundExercise && /^İşte\s/i.test(trimmed)) continue;
-    if (!foundExercise && /haftalık\s+antrenman\s+program/i.test(trimmed)) continue;
-    if (!foundExercise && /^(hedef|boy|kilo|yaş)/i.test(trimmed) && !/set|tekrar|saniye/i.test(trimmed)) continue;
+    // Skip introduction sentences in any language
+    if (!foundExercise && /^(İşte|Here\s+is|Hier\s+ist|Вот)\s/i.test(trimmed)) continue;
+    if (!foundExercise && /(haftalık\s+antrenman|weekly\s+workout|wöchentliches?\s+Training|недельная\s+программа)/i.test(trimmed)) continue;
+    if (!foundExercise && /^(hedef|boy|kilo|yaş|goal|height|weight|age|Ziel|Gewicht|Größe|Alter|цель|рост|вес|возраст)/i.test(trimmed) && !/set|tekrar|saniye|reps?|sec/i.test(trimmed)) continue;
     // İçerik satırı bulundu
     foundExercise = true;
     cleaned.push(line);
@@ -106,8 +125,10 @@ export function parseProgramToDays(fullText: string): ParsedProgram {
   for (let i = 1; i < parts.length - 1; i += 2) {
     const dayName = parts[i]?.trim();
     const content = parts[i + 1]?.trim() ?? "";
-    if (dayName && GUN_SIRASI.includes(dayName as GunAdi)) {
-      const gun = dayName as GunAdi;
+    if (!dayName) continue;
+    // Map any language day name to Turkish GunAdi
+    const gun = mapDayNameToGunAdi(dayName);
+    if (gun) {
       const cleanedContent = cleanDayContent(content);
       const { content: finalContent, kalori } = extractKalori(cleanedContent);
       result[gun] = (result[gun] ? result[gun] + "\n\n" + finalContent : finalContent).trim();

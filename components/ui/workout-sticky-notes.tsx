@@ -111,17 +111,11 @@ function isRestDay(content: string): boolean {
 // Note: This will be replaced with t.extra.dayNames in the component
 const TURKISH_DAYS: GunAdi[] = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
-// Bugünün gününü Türkçe GunAdi olarak al
-// Note: This function will use t.extra.dayNames in the component
-function getTodayGunAdi(dayNames: readonly string[]): GunAdi {
+// Returns today's day as Turkish GunAdi key (always Turkish for data access)
+function getTodayGunAdi(): GunAdi {
   // getDay() returns 0=Sunday, 1=Monday, etc.
-  // dayNames is [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
-  // We need [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
-  const reorderedDays = [dayNames[6], ...dayNames.slice(0, 6)];
-  const dayIndex = new Date().getDay();
-  // Map translated name back to Turkish GunAdi
   const turkishDays: GunAdi[] = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
-  return turkishDays[dayIndex];
+  return turkishDays[new Date().getDay()];
 }
 
 // User-scoped localStorage key
@@ -189,7 +183,7 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
     } as Record<GunAdi, string>;
   }, [t.extra.dayNames]);
 
-  const todayGun = useMemo(() => getTodayGunAdi(t.extra.dayNames), [t.extra.dayNames]);
+  const todayGun = useMemo(() => getTodayGunAdi(), []);
 
   // Antrenman günlerini hazırla
   const workoutDays = useMemo((): WorkoutDay[] => {
@@ -533,7 +527,7 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
                               type="button"
                               onClick={() => handleDeleteLine(selectedDay.gun, idx)}
                               className="flex-shrink-0 mt-0.5 p-1 rounded-md opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-500/10 transition-all"
-                              title="Sil"
+                              title={t.common?.delete || "Delete"}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>

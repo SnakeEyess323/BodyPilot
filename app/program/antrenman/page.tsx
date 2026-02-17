@@ -207,10 +207,10 @@ export default function AntrenmanPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
             <h3 className="mb-2 text-lg font-semibold text-foreground">
-              Şu anki programı değiştirelim mi?
+              {t.extra.replaceProgram}
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">
-              Zaten bir haftalık antrenman programınız var. Geçmiş haftanın programını kopyalarsanız mevcut program değiştirilecek.
+              {t.extra.copyWeekConfirmDesc}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -221,14 +221,14 @@ export default function AntrenmanPage() {
                 }}
                 className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
               >
-                İptal
+                {t.common.cancel}
               </button>
               <button
                 type="button"
                 onClick={applyCopyWeek}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                Evet, Kopyala
+                {t.extra.yesCopy}
               </button>
             </div>
           </div>

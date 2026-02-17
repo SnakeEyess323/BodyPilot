@@ -74,15 +74,15 @@ function profilMetni(profil?: Profil, lang: Lang = "tr"): string {
 
 export function antrenmanSistemPromptu(profil?: Profil, lang: Lang = "tr"): string {
   const ek = profilMetni(profil, lang);
-  const days = DAY_NAMES[lang];
-  const dayHeaders = days.map((d) => `${d}:`).join(", ");
+  const turkishDays = DAY_NAMES.tr;
+  const dayHeaders = turkishDays.map((d) => `${d}:`).join(", ");
   const langName = LANG_NAMES[lang];
   const rest = { tr: "Dinlenme", en: "Rest", de: "Ruhetag", ru: "Отдых" }[lang];
   const warmup = { tr: "ısınma - hafif kilo", en: "warm-up - light weight", de: "Aufwärmen - leichtes Gewicht", ru: "разминка - лёгкий вес" }[lang];
 
-  return `You are a fitness coach. Generate a weekly workout program based on user info. For each day, provide exercise names, sets-reps or duration, and short notes. RESPOND ENTIRELY IN ${langName.toUpperCase()}.
-Output must be day-by-day. Use exactly these day headers: ${dayHeaders}. For rest days write "${rest}" under that day.
-IMPORTANT: Next to each day header, add the estimated calories burned. Format: "${days[0]}: (~350 kcal)". Don't write calories for rest days.
+  return `You are a fitness coach. Generate a weekly workout program based on user info. For each day, provide exercise names, sets-reps or duration, and short notes. RESPOND ENTIRELY IN ${langName.toUpperCase()} (exercise descriptions, notes, rest days - everything in ${langName}).
+Output must be day-by-day. CRITICAL: You MUST use exactly these Turkish day headers (this is required for parsing): ${dayHeaders}. For rest days write "${rest}" under that day.
+IMPORTANT: Next to each day header, add the estimated calories burned. Format: "${turkishDays[0]}: (~350 kcal)". Don't write calories for rest days.
 IMPORTANT: Do NOT write any introduction. Start directly with day headers and exercises.
 WARM-UP RULE: Each workout day must start with a 5-10 minute general warm-up (light cardio, dynamic stretching). Also, the first set of every weight exercise must be a light-weight warm-up set. Example: "Bench Press: 1x12 (${warmup}) + 3x10". ${ek}`.trim();
 }

@@ -210,14 +210,28 @@ export function getHistoryWithCurrentWeek(userId: string): AntrenmanGecmisHafta[
   return [...history].reverse();
 }
 
+type Lang = "tr" | "en" | "de" | "ru";
+
+const MONTH_ABBR: Record<Lang, string[]> = {
+  tr: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"],
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  de: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+  ru: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
+};
+
+const THIS_WEEK: Record<Lang, string> = {
+  tr: "Bu Hafta", en: "This Week", de: "Diese Woche", ru: "Эта неделя",
+};
+
+const LAST_WEEK: Record<Lang, string> = {
+  tr: "Geçen Hafta", en: "Last Week", de: "Letzte Woche", ru: "Прошлая неделя",
+};
+
 /**
  * Bir tarih string'ini "9 Şub - 15 Şub" formatinda gosterir.
  */
-export function formatWeekRange(startDateStr: string): string {
-  const months = [
-    "Oca", "Şub", "Mar", "Nis", "May", "Haz",
-    "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
-  ];
+export function formatWeekRange(startDateStr: string, lang: Lang = "tr"): string {
+  const months = MONTH_ABBR[lang] || MONTH_ABBR.tr;
 
   try {
     const start = new Date(startDateStr + "T00:00:00");
@@ -241,21 +255,20 @@ export function formatWeekRange(startDateStr: string): string {
 /**
  * Hafta key'inden "Bu Hafta", "Gecen Hafta", veya tarih araligi olusturur.
  */
-export function getWeekLabel(weekKey: string, startDate: string): string {
+export function getWeekLabel(weekKey: string, startDate: string, lang: Lang = "tr"): string {
   const currentWeek = getCurrentWeekKey();
 
   if (weekKey === currentWeek) {
-    return "Bu Hafta";
+    return THIS_WEEK[lang] || THIS_WEEK.tr;
   }
 
-  // Gecen haftayi hesapla
   const lastWeek = new Date();
   lastWeek.setDate(lastWeek.getDate() - 7);
   const lastWeekKey = getWeekKeyForDate(lastWeek);
 
   if (weekKey === lastWeekKey) {
-    return "Geçen Hafta";
+    return LAST_WEEK[lang] || LAST_WEEK.tr;
   }
 
-  return formatWeekRange(startDate);
+  return formatWeekRange(startDate, lang);
 }

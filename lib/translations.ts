@@ -680,6 +680,7 @@ export const translations = {
       copyProgramDesc: "Zaten bir haftalık antrenman programınız var. Geçmiş haftanın programını kopyalarsanız mevcut program değiştirilecek.",
       yesReplace: "Evet, Değiştir",
       yesCopy: "Evet, Kopyala",
+      copyWeekConfirmDesc: "Zaten bir haftalık antrenman programınız var. Geçmiş haftanın programını kopyalarsanız mevcut program değiştirilecek.",
       
       // Payment pages
       paymentProcessing: "Ödemeniz İşleniyor...",
@@ -1439,6 +1440,7 @@ export const translations = {
       copyProgramDesc: "You already have a weekly workout program. If you copy a past week's program, the current program will be replaced.",
       yesReplace: "Yes, Replace",
       yesCopy: "Yes, Copy",
+      copyWeekConfirmDesc: "You already have a weekly workout program. Copying a past week's program will replace your current program.",
       
       // Payment pages
       paymentProcessing: "Processing Your Payment...",
@@ -2198,6 +2200,7 @@ export const translations = {
       copyProgramDesc: "Sie haben bereits ein wöchentliches Trainingsprogramm. Wenn Sie das Programm einer vergangenen Woche kopieren, wird das aktuelle Programm ersetzt.",
       yesReplace: "Ja, ersetzen",
       yesCopy: "Ja, kopieren",
+      copyWeekConfirmDesc: "Sie haben bereits ein wöchentliches Trainingsprogramm. Das Kopieren eines vergangenen Wochenprogramms ersetzt Ihr aktuelles Programm.",
       
       // Payment pages
       paymentProcessing: "Ihre Zahlung wird bearbeitet...",
@@ -2938,6 +2941,7 @@ export const translations = {
       copyProgramDesc: "У вас уже есть еженедельная программа тренировок. Если вы скопируете программу прошлой недели, текущая программа будет заменена.",
       yesReplace: "Да, заменить",
       yesCopy: "Да, скопировать",
+      copyWeekConfirmDesc: "У вас уже есть недельная программа тренировок. Копирование программы прошлой недели заменит вашу текущую программу.",
       
       // Payment pages
       paymentProcessing: "Обработка вашего платежа...",

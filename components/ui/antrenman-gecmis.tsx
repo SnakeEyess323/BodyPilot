@@ -30,10 +30,10 @@ import {
 } from "@/lib/antrenman-gecmis";
 import type { GunAdi } from "@/lib/types";
 
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-// Note: Day names and abbreviations are now accessed via translations
+// Turkish day names used internally as data keys - NEVER changes with language
+const TURKISH_DAYS: GunAdi[] = [
+  "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar",
+];
 
 // =============================================================================
 // HELPERS
@@ -52,20 +52,27 @@ function isRestDay(content: string): boolean {
   );
 }
 
-/** Icerik ozetini cikarir. Ornegin "Gogus + Triceps" */
 function getContentSummary(content: string, restText: string): string {
   if (!content || content.trim() === "") return restText;
   if (isRestDay(content)) return restText;
 
-  // Satir baslarindaki ana kas gruplarini veya ilk satiri al
   const lines = content.split("\n").filter((l) => l.trim());
   if (lines.length === 0) return content.substring(0, 30);
 
-  // Ilk satir genellikle baslik olur
   const firstLine = lines[0].replace(/^[#*\-•]+\s*/, "").trim();
-
   if (firstLine.length <= 35) return firstLine;
   return firstLine.substring(0, 32) + "...";
+}
+
+/** Maps Turkish day key index to translated display name */
+function getTranslatedDayName(turkishDay: GunAdi, translatedDays: readonly string[]): string {
+  const idx = TURKISH_DAYS.indexOf(turkishDay);
+  return idx >= 0 ? translatedDays[idx] : turkishDay;
+}
+
+function getTranslatedDayAbbr(turkishDay: GunAdi, translatedAbbr: readonly string[]): string {
+  const idx = TURKISH_DAYS.indexOf(turkishDay);
+  return idx >= 0 ? translatedAbbr[idx] : turkishDay.substring(0, 3);
 }
 
 // =============================================================================
@@ -101,7 +108,6 @@ function DayCell({ content, completed, isCurrentWeek, onClick, restText }: DayCe
               : "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800/60 cursor-pointer hover:bg-red-100 dark:hover:bg-red-950/50"
       )}
     >
-      {/* Status icon */}
       {!rest && (
         <div className="absolute top-1 right-1">
           {completed ? (
@@ -141,14 +147,23 @@ interface WeekRowProps {
   isCurrentWeek: boolean;
   onCellClick: (week: AntrenmanGecmisHafta, gun: GunAdi) => void;
   onCopyWeek?: (program: Record<string, string>) => void;
-  t: any;
+  translatedDays: readonly string[];
+  translatedAbbr: readonly string[];
+  weekLabel: string;
+  restText: string;
+  copyWeekTitle: string;
+  copyWeek: string;
+  copyWeekShort: string;
+  completedText: string;
 }
 
-function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek, t }: WeekRowProps) {
-  const label = getWeekLabel(week.weekKey, week.startDate);
-  const dayNames = [...t.extra.dayNames] as GunAdi[];
-  const dayAbbr = [...t.extra.dayAbbr];
-  const workoutDays = dayNames.filter(
+function WeekRow({
+  week, isCurrentWeek, onCellClick, onCopyWeek,
+  translatedDays, translatedAbbr, weekLabel,
+  restText, copyWeekTitle, copyWeek, copyWeekShort, completedText,
+}: WeekRowProps) {
+  // Always use Turkish day names for data access
+  const workoutDays = TURKISH_DAYS.filter(
     (g) => !isRestDay(week.program[g] || "")
   );
   const completedCount = workoutDays.filter((g) =>
@@ -166,7 +181,6 @@ function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek, t }: WeekRowPro
           : "hover:bg-muted/30"
       )}
     >
-      {/* Hafta Label */}
       <td className="py-2 px-2 sm:px-3 align-middle">
         <div className="flex flex-col gap-0.5">
           <span
@@ -180,7 +194,7 @@ function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek, t }: WeekRowPro
             {isCurrentWeek && (
               <span className="inline-block w-2 h-2 rounded-full bg-sky-500 mr-1.5 animate-pulse" />
             )}
-            {label}
+            {weekLabel}
           </span>
           <span className="text-[10px] text-muted-foreground">
             {week.weekKey}
@@ -193,30 +207,29 @@ function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek, t }: WeekRowPro
                 onCopyWeek(week.program);
               }}
               className="mt-1 inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
-              title={t.extra.copyWeekTitle}
+              title={copyWeekTitle}
             >
               <Copy className="h-3 w-3" />
-              <span className="hidden sm:inline">{t.extra.copyWeek}</span>
-              <span className="sm:hidden">{t.extra.copyWeekShort}</span>
+              <span className="hidden sm:inline">{copyWeek}</span>
+              <span className="sm:hidden">{copyWeekShort}</span>
             </button>
           )}
         </div>
       </td>
 
-      {/* Gun hucreleri */}
-      {dayNames.map((gun, index) => (
+      {/* Day cells - iterate TURKISH_DAYS for data access, display translated */}
+      {TURKISH_DAYS.map((gun, index) => (
         <td key={gun} className="py-2 px-0.5 sm:px-1 align-middle">
           <DayCell
             content={week.program[gun] || ""}
             completed={week.completed.includes(gun)}
             isCurrentWeek={isCurrentWeek}
             onClick={() => onCellClick(week, gun)}
-            restText={t.extra.rest}
+            restText={restText}
           />
         </td>
       ))}
 
-      {/* Ozet */}
       <td className="py-2 px-2 sm:px-3 align-middle text-center">
         <div className="flex flex-col items-center gap-1">
           <div
@@ -231,7 +244,6 @@ function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek, t }: WeekRowPro
           >
             {completedCount}/{totalDays}
           </div>
-          {/* Progress bar */}
           <div className="w-full max-w-[50px] h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
             <div
               className={cn(
@@ -260,15 +272,13 @@ function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek, t }: WeekRowPro
 
 interface AntrenmanGecmisProps {
   className?: string;
-  /** Disaridan tetiklenecek refresh sayaci */
   refreshTrigger?: number;
-  /** Gecmis bir haftanin programini kopyalamak icin callback */
   onCopyWeek?: (program: Record<string, string>) => void;
 }
 
 export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: AntrenmanGecmisProps) {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const userId = user?.id ?? "";
   const [history, setHistory] = useState<AntrenmanGecmisHafta[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -277,11 +287,8 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
     gun: GunAdi;
   } | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  
-  const dayNames = [...t.extra.dayNames] as GunAdi[];
-  const dayAbbr = [...t.extra.dayAbbr];
 
-  // Gecmisi yukle (user-scoped)
+  // Load history (user-scoped)
   useEffect(() => {
     if (userId) {
       const data = getHistoryWithCurrentWeek(userId);
@@ -303,7 +310,6 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
     []
   );
 
-  // Bos gecmis
   if (history.length === 0) {
     return (
       <div className={cn("rounded-xl border border-border bg-card p-6", className)}>
@@ -350,13 +356,12 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Quick stats */}
           <div className="hidden sm:flex items-center gap-3 mr-3">
             {(() => {
               const totalWorkouts = history.reduce(
                 (acc, w) =>
                   acc +
-                  dayNames.filter((g) => !isRestDay(w.program[g] || "")).filter(
+                  TURKISH_DAYS.filter((g) => !isRestDay(w.program[g] || "")).filter(
                     (g) => w.completed.includes(g)
                   ).length,
                 0
@@ -387,12 +392,12 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
                   <Clock className="h-3.5 w-3.5 inline mr-1" />
                   {t.extra.week}
                 </th>
-                {dayNames.map((gun, index) => (
+                {TURKISH_DAYS.map((gun, index) => (
                   <th
                     key={gun}
                     className="py-2 px-0.5 sm:px-1 text-center text-xs font-semibold text-muted-foreground"
                   >
-                    {dayAbbr[index]}
+                    {t.extra.dayAbbr[index]}
                   </th>
                 ))}
                 <th className="py-2 px-2 sm:px-3 text-center text-xs font-semibold text-muted-foreground w-[60px]">
@@ -408,7 +413,14 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
                   isCurrentWeek={week.weekKey === currentWeekKey}
                   onCellClick={handleCellClick}
                   onCopyWeek={onCopyWeek}
-                  t={t}
+                  translatedDays={t.extra.dayNames}
+                  translatedAbbr={t.extra.dayAbbr}
+                  weekLabel={getWeekLabel(week.weekKey, week.startDate, language)}
+                  restText={t.extra.rest}
+                  copyWeekTitle={t.extra.copyWeekTitle}
+                  copyWeek={t.extra.copyWeek}
+                  copyWeekShort={t.extra.copyWeekShort}
+                  completedText={t.extra.completed}
                 />
               ))}
             </tbody>
@@ -434,9 +446,10 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
                   <span className="text-xs text-muted-foreground">
                     {getWeekLabel(
                       selectedDetail.week.weekKey,
-                      selectedDetail.week.startDate
+                      selectedDetail.week.startDate,
+                      language
                     )}{" "}
-                    - {selectedDetail.gun}
+                    - {getTranslatedDayName(selectedDetail.gun, t.extra.dayNames)}
                   </span>
                   {selectedDetail.week.completed.includes(
                     selectedDetail.gun
@@ -448,7 +461,7 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
                 </div>
                 <DialogTitle className="text-xl flex items-center gap-2">
                   <Dumbbell className="h-5 w-5 text-violet-500" />
-                  {selectedDetail.gun} {t.extra.workout}
+                  {getTranslatedDayName(selectedDetail.gun, t.extra.dayNames)} {t.extra.workout}
                 </DialogTitle>
               </DialogHeader>
 

@@ -25,10 +25,15 @@ export function StreakWidget() {
     return dates;
   }, []);
 
-  // Check which of the last 7 days are visited
+  // Check which of the last 7 days are visited (always include today)
+  const today = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+
   const visitedDays = useMemo(() => {
-    return last7Days.map(date => visitHistory.includes(date));
-  }, [last7Days, visitHistory]);
+    return last7Days.map(date => date === today || visitHistory.includes(date));
+  }, [last7Days, visitHistory, today]);
 
   if (!isLoaded) {
     return (

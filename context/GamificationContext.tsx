@@ -101,6 +101,52 @@ function getYesterday(): string {
   return toLocalDateStr(d);
 }
 
+/** Difference in calendar days between two YYYY-MM-DD strings (b - a) */
+function dayDiff(a: string, b: string): number {
+  const d1 = new Date(a + "T12:00:00");
+  const d2 = new Date(b + "T12:00:00");
+  return Math.round((d2.getTime() - d1.getTime()) / 86400000);
+}
+
+/** Recalculate current streak and longest streak from visitHistory */
+function recalculateStreak(visitHistory: string[]): { current: number; longest: number } {
+  if (visitHistory.length === 0) return { current: 0, longest: 0 };
+
+  const today = getToday();
+  const yesterday = getYesterday();
+  const dates = Array.from(new Set(visitHistory)).sort();
+
+  // Calculate longest streak
+  let longest = 1;
+  let run = 1;
+  for (let i = 1; i < dates.length; i++) {
+    if (dayDiff(dates[i - 1], dates[i]) === 1) {
+      run++;
+    } else {
+      longest = Math.max(longest, run);
+      run = 1;
+    }
+  }
+  longest = Math.max(longest, run);
+
+  // Current streak = consecutive days counting backwards from the most recent
+  const last = dates[dates.length - 1];
+  if (last !== today && last !== yesterday) {
+    return { current: 0, longest };
+  }
+
+  let current = 1;
+  for (let i = dates.length - 1; i > 0; i--) {
+    if (dayDiff(dates[i - 1], dates[i]) === 1) {
+      current++;
+    } else {
+      break;
+    }
+  }
+
+  return { current, longest };
+}
+
 export function GamificationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [data, setData] = useState<GamificationData>(DEFAULT_DATA);
@@ -131,28 +177,28 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     }
     setIsLoaded(true);
 
-    // Fetch fresh data from Supabase and merge carefully
+    // Fetch fresh data from Supabase and merge visit histories
     getUserData<GamificationData>(STORAGE_KEY).then((remoteData) => {
       if (remoteData && typeof remoteData === "object") {
         const remote = { ...DEFAULT_DATA, ...remoteData };
         setData((prev) => {
-          const today = getToday();
-          // If we already processed today's visit locally, keep our streak
-          // but merge cumulative stats with max() so nothing is lost
-          if (prev.lastVisitDate === today && remote.lastVisitDate !== today) {
-            return {
-              ...prev,
-              totalXP: Math.max(prev.totalXP, remote.totalXP),
-              totalWorkouts: Math.max(prev.totalWorkouts, remote.totalWorkouts),
-              totalMealDaysFollowed: Math.max(prev.totalMealDaysFollowed, remote.totalMealDaysFollowed),
-              longestStreak: Math.max(prev.longestStreak, remote.longestStreak),
-              unlockedBadges: Array.from(new Set([...prev.unlockedBadges, ...remote.unlockedBadges])),
-              challengesCompleted: Math.max(prev.challengesCompleted ?? 0, remote.challengesCompleted ?? 0),
-              challengesWon: Math.max(prev.challengesWon ?? 0, remote.challengesWon ?? 0),
-              referralsCount: Math.max(prev.referralsCount ?? 0, remote.referralsCount ?? 0),
-            };
-          }
-          return remote;
+          // Merge visit histories from both sources so no days are lost
+          const mergedHistory = Array.from(
+            new Set([...prev.visitHistory, ...(remote.visitHistory || [])])
+          );
+          // Merge cumulative stats with max
+          return {
+            ...prev,
+            visitHistory: mergedHistory,
+            totalXP: Math.max(prev.totalXP, remote.totalXP),
+            totalWorkouts: Math.max(prev.totalWorkouts, remote.totalWorkouts),
+            totalMealDaysFollowed: Math.max(prev.totalMealDaysFollowed, remote.totalMealDaysFollowed),
+            longestStreak: Math.max(prev.longestStreak, remote.longestStreak),
+            unlockedBadges: Array.from(new Set([...prev.unlockedBadges, ...remote.unlockedBadges])),
+            challengesCompleted: Math.max(prev.challengesCompleted ?? 0, remote.challengesCompleted ?? 0),
+            challengesWon: Math.max(prev.challengesWon ?? 0, remote.challengesWon ?? 0),
+            referralsCount: Math.max(prev.referralsCount ?? 0, remote.referralsCount ?? 0),
+          };
         });
       }
     });
@@ -166,66 +212,58 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     }
   }, [data, isLoaded]);
 
-  // Check and update streak on load
+  // Recalculate streak from visitHistory on every load / data change
   useEffect(() => {
     if (!isLoaded || !user) return;
 
     const today = getToday();
-    const yesterday = getYesterday();
-
-    // Already visited today
-    if (data.lastVisitDate === today) {
-      return;
-    }
 
     setData((prev) => {
-      let newStreak = prev.currentStreak;
-      let newXP = prev.totalXP;
-      const newVisitHistory = [...prev.visitHistory];
+      // Ensure today is in visit history
+      const hasToday = prev.visitHistory.includes(today);
+      const newVisitHistory = hasToday
+        ? prev.visitHistory
+        : [...prev.visitHistory, today];
 
-      // Calculate streak
-      if (prev.lastVisitDate === yesterday) {
-        // Consecutive day - increase streak
-        newStreak = prev.currentStreak + 1;
-      } else if (prev.lastVisitDate === null) {
-        // First visit ever
-        newStreak = 1;
-      } else {
-        // Streak broken
-        newStreak = 1;
+      // Always recalculate streak from full history
+      const { current, longest } = recalculateStreak(newVisitHistory);
+      const newLongestStreak = Math.max(prev.longestStreak, longest, current);
+
+      // XP: only give daily login XP once per day
+      const isNewDay = prev.lastVisitDate !== today;
+      let xpGain = 0;
+      if (isNewDay) {
+        xpGain += XP_REWARDS.dailyLogin;
+        if (current === 7) xpGain += XP_REWARDS.streak7Bonus;
+        if (current === 30) xpGain += XP_REWARDS.streak30Bonus;
       }
 
-      // Add daily login XP
-      newXP += XP_REWARDS.dailyLogin;
-
-      // Check streak bonuses
-      if (newStreak === 7) {
-        newXP += XP_REWARDS.streak7Bonus;
-      } else if (newStreak === 30) {
-        newXP += XP_REWARDS.streak30Bonus;
+      // Skip update if nothing actually changed
+      if (
+        !isNewDay &&
+        prev.currentStreak === current &&
+        prev.longestStreak === newLongestStreak &&
+        prev.visitHistory.length === newVisitHistory.length
+      ) {
+        return prev;
       }
-
-      // Add to visit history
-      if (!newVisitHistory.includes(today)) {
-        newVisitHistory.push(today);
-      }
-
-      const newLongestStreak = Math.max(prev.longestStreak, newStreak);
 
       return {
         ...prev,
-        currentStreak: newStreak,
+        currentStreak: current,
         longestStreak: newLongestStreak,
         lastVisitDate: today,
-        totalXP: newXP,
+        totalXP: prev.totalXP + xpGain,
         visitHistory: newVisitHistory,
-        // Reset daily tasks for new day
-        dailyTasksDate: today,
-        completedTasks: ["daily_login"], // Auto-complete login task
+        // Reset daily tasks only on a genuinely new day
+        ...(isNewDay
+          ? { dailyTasksDate: today, completedTasks: ["daily_login" as DailyTaskId] }
+          : {}),
       };
     });
+  // Re-run when data arrives from Supabase (visitHistory changes)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, user, data.lastVisitDate]);
+  }, [isLoaded, user, data.visitHistory.length, data.lastVisitDate]);
 
   // Check for badge unlocks whenever data changes
   useEffect(() => {

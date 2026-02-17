@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfil } from "@/context/ProfilContext";
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +9,7 @@ import { useSubscription } from "@/context/SubscriptionContext";
 import { updateProfile } from "@/lib/supabase/data-service";
 import { createClient } from "@/lib/supabase/client";
 import ProfileForm from "@/components/ProfileForm";
-import { Crown, CreditCard, ExternalLink, Loader2 } from "lucide-react";
+import { Crown, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Profil } from "@/lib/types";
 
@@ -19,8 +19,6 @@ export default function ProfilPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const { isPro, plan } = useSubscription();
-  const [isPortalLoading, setIsPortalLoading] = useState(false);
-
   // Load existing full_name from Auth if not already in profil
   useEffect(() => {
     if (user && !profil.adSoyad) {
@@ -62,29 +60,6 @@ export default function ProfilPage() {
       profil.ortam
   );
 
-  async function handleManageSubscription() {
-    setIsPortalLoading(true);
-    try {
-      const res = await fetch("/api/polar/portal", {
-        method: "POST",
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || t.profile.portalError);
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (error) {
-      console.error("Portal error:", error);
-      alert(t.profile.portalError);
-    } finally {
-      setIsPortalLoading(false);
-    }
-  }
-
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <div className="mb-8 text-center">
@@ -122,21 +97,15 @@ export default function ProfilPage() {
 
           {isPro ? (
             <button
-              onClick={handleManageSubscription}
-              disabled={isPortalLoading}
+              onClick={() => router.push("/abonelik")}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition",
                 "border border-border bg-background hover:bg-accent",
                 "text-foreground"
               )}
             >
-              {isPortalLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CreditCard className="h-4 w-4" />
-              )}
+              <CreditCard className="h-4 w-4" />
               {t.profile.manageSubscription}
-              <ExternalLink className="h-3 w-3" />
             </button>
           ) : (
             <button

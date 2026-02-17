@@ -20,6 +20,7 @@ import {
 import { Trophy, Flame, ChevronRight, Zap, Target, Dumbbell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { loadKiloTakip, getToplamHacim, getKisiselRekorlar, formatTarih, type GunlukAntrenman } from "@/lib/kilo-takip";
+import { AnimateIn, StaggerContainer, StaggerItem } from "@/components/ui/animate-in";
 
 export default function DashboardPage() {
   const { program, displayProgram, isTranslating } = useHaftalikProgram();
@@ -56,15 +57,17 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-8 text-2xl font-bold text-foreground">{t.dashboard.title}</h1>
+      <AnimateIn type="fade-down" duration={0.5}>
+        <h1 className="mb-8 text-2xl font-bold text-foreground">{t.dashboard.title}</h1>
+      </AnimateIn>
 
       {/* Gamification Section */}
-      <section className="mb-10">
+      <AnimateIn as="section" type="fade-up" delay={0.1} className="mb-10">
         <GamificationSection />
-      </section>
+      </AnimateIn>
 
       {/* Challenge Section */}
-      <section className="mb-10">
+      <AnimateIn as="section" type="fade-up" delay={0.15} className="mb-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Trophy className="h-5 w-5 text-orange-500" />
@@ -157,9 +160,9 @@ export default function DashboardPage() {
             </span>
           </Link>
         )}
-      </section>
+      </AnimateIn>
 
-      <section className="mb-10">
+      <AnimateIn as="section" type="fade-up" delay={0.2} className="mb-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             {t.dashboard.weeklyWorkout || "Haftalık Antrenman"}
@@ -194,9 +197,9 @@ export default function DashboardPage() {
         )}
         {/* Antrenman Gecmisi */}
         <AntrenmanGecmis className="mt-6" refreshTrigger={historyRefresh} />
-      </section>
+      </AnimateIn>
 
-      <section className="mb-10">
+      <AnimateIn as="section" type="fade-up" delay={0.1} className="mb-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             {t.dashboard.mealProgram}
@@ -227,10 +230,10 @@ export default function DashboardPage() {
         ) : (
           <YemekStickyNotesSection content={yemekDisplayContent} />
         )}
-      </section>
+      </AnimateIn>
 
       {/* Kilo Takip Özet */}
-      <section className="mb-10">
+      <AnimateIn as="section" type="fade-up" delay={0.1} className="mb-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             {t.weightTracking.dashboardTitle}
@@ -287,51 +290,57 @@ export default function DashboardPage() {
             <p className="mt-1 text-xs text-primary font-medium">{t.weightTracking.dashboardDesc}</p>
           </Link>
         )}
-      </section>
+      </AnimateIn>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Link
-          href="/program/antrenman"
-          className="rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/50 hover:shadow-md"
-        >
-          <h2 className="mb-2 text-lg font-semibold text-foreground">
-            {t.dashboard.workoutProgramCard}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t.dashboard.workoutProgramDesc}
-          </p>
-        </Link>
-        <Link
-          href="/program/yemek"
-          className="rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/50 hover:shadow-md"
-        >
-          <h2 className="mb-2 text-lg font-semibold text-foreground">
-            {t.dashboard.mealProgramCard}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t.dashboard.mealProgramDesc}
-          </p>
-        </Link>
-        <Link
-          href="/program/kilo-takip"
-          className="rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/50 hover:shadow-md"
-        >
-          <h2 className="mb-2 text-lg font-semibold text-foreground">
-            {t.weightTracking.dashboardTitle}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t.weightTracking.dashboardDesc}
-          </p>
-        </Link>
-      </div>
-      <div className="mt-10">
+      <StaggerContainer className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" staggerDelay={0.1}>
+        <StaggerItem type="fade-up">
+          <Link
+            href="/program/antrenman"
+            className="block rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5"
+          >
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
+              {t.dashboard.workoutProgramCard}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {t.dashboard.workoutProgramDesc}
+            </p>
+          </Link>
+        </StaggerItem>
+        <StaggerItem type="fade-up">
+          <Link
+            href="/program/yemek"
+            className="block rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5"
+          >
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
+              {t.dashboard.mealProgramCard}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {t.dashboard.mealProgramDesc}
+            </p>
+          </Link>
+        </StaggerItem>
+        <StaggerItem type="fade-up">
+          <Link
+            href="/program/kilo-takip"
+            className="block rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5"
+          >
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
+              {t.weightTracking.dashboardTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {t.weightTracking.dashboardDesc}
+            </p>
+          </Link>
+        </StaggerItem>
+      </StaggerContainer>
+      <AnimateIn type="fade-up" delay={0.2} className="mt-10">
         <Link
           href="/asistan"
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 font-medium text-primary-foreground transition hover:bg-primary/90"
         >
           {t.dashboard.chatWithAssistant}
         </Link>
-      </div>
+      </AnimateIn>
     </div>
   );
 }

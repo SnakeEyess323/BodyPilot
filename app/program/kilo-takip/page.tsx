@@ -14,6 +14,7 @@ import {
 import { KiloTakipForm } from "@/components/ui/kilo-takip-form";
 import { KiloTakipGecmis } from "@/components/ui/kilo-takip-gecmis";
 import { KiloTakipIlerleme } from "@/components/ui/kilo-takip-ilerleme";
+import { AnimateIn } from "@/components/ui/animate-in";
 
 export default function KiloTakipPage() {
   const { t } = useLanguage();
@@ -74,53 +75,63 @@ export default function KiloTakipPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       {/* Başlık */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-3 text-2xl font-bold text-foreground">
-            <Dumbbell className="h-7 w-7 text-primary" />
-            {wt.title}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{wt.subtitle}</p>
+      <AnimateIn type="fade-down" duration={0.5}>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="flex items-center gap-3 text-2xl font-bold text-foreground">
+              <Dumbbell className="h-7 w-7 text-primary" />
+              {wt.title}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{wt.subtitle}</p>
+          </div>
+          {!showForm && (
+            <button
+              onClick={() => { setShowForm(true); setEditingWorkout(null); }}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              {wt.newWorkout}
+            </button>
+          )}
         </div>
-        {!showForm && (
-          <button
-            onClick={() => { setShowForm(true); setEditingWorkout(null); }}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            {wt.newWorkout}
-          </button>
-        )}
-      </div>
+      </AnimateIn>
 
       {/* Kaydedildi mesajı */}
       {savedMessage && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-100 px-4 py-2.5 text-sm font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">
-          <Check className="h-4 w-4" />
-          {wt.saved}
-        </div>
+        <AnimateIn type="scale-in" duration={0.3}>
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-100 px-4 py-2.5 text-sm font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">
+            <Check className="h-4 w-4" />
+            {wt.saved}
+          </div>
+        </AnimateIn>
       )}
 
       {/* Form */}
       {showForm && (
-        <div className="mb-8">
+        <AnimateIn type="fade-up" duration={0.4} className="mb-8">
           <KiloTakipForm
             allData={data}
             editingWorkout={editingWorkout}
             onSave={handleSave}
             onCancel={handleCancel}
           />
-        </div>
+        </AnimateIn>
       )}
 
       {/* Son Antrenmanlar */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">{wt.recentWorkouts}</h2>
-        <KiloTakipGecmis data={data} onEdit={handleEdit} onDelete={handleDelete} />
-      </div>
+      <AnimateIn type="fade-up" delay={0.15}>
+        <div className="mb-8">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">{wt.recentWorkouts}</h2>
+          <KiloTakipGecmis data={data} onEdit={handleEdit} onDelete={handleDelete} />
+        </div>
+      </AnimateIn>
 
       {/* İlerleme & PR */}
-      {data.length > 0 && <KiloTakipIlerleme data={data} />}
+      {data.length > 0 && (
+        <AnimateIn type="fade-up" delay={0.25}>
+          <KiloTakipIlerleme data={data} />
+        </AnimateIn>
+      )}
     </div>
   );
 }

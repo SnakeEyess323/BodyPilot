@@ -333,6 +333,7 @@ function BugunYiyeceklerimSection({
   const [portionAmount, setPortionAmount] = useState<number>(1);
   const [portionUnit, setPortionUnit] = useState<PorsiyonBirim>("porsiyon");
   const [showAllUnits, setShowAllUnits] = useState(false);
+  const [portionOpen, setPortionOpen] = useState(false);
 
   const [manuelOgunYemekleri, setManuelOgunYemekleri] = useState<ManuelOgunYemekleri>(DEFAULT_MANUEL_OGUN);
   const [manuelLoaded, setManuelLoaded] = useState(false);
@@ -549,89 +550,97 @@ function BugunYiyeceklerimSection({
             </button>
           </div>
 
-          {/* Porsiyon seçimi */}
-          <div className="mt-3 rounded-lg border border-violet-100 bg-white/60 p-3 dark:border-violet-900 dark:bg-violet-950/20">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-xs font-semibold text-muted-foreground">{t.dashboard.portionLabel}</span>
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              {/* Miktar seçimi */}
-              <div className="flex items-center rounded-lg border border-border bg-background">
-                <button
-                  onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
-                  className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
-                  disabled={portionAmount <= 0.5}
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  value={portionAmount}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val > 0) setPortionAmount(val);
-                  }}
-                  className="w-14 border-x border-border bg-transparent px-1 py-1.5 text-center text-sm font-semibold text-foreground focus:outline-none"
-                  min="0.5"
-                  step="0.5"
-                />
-                <button
-                  onClick={() => setPortionAmount(portionAmount + 0.5)}
-                  className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
-                >
-                  +
-                </button>
+          {/* Porsiyon seçimi - açılır/kapanır */}
+          <div className="mt-3 rounded-lg border border-violet-100 bg-white/60 dark:border-violet-900 dark:bg-violet-950/20 overflow-hidden">
+            <button
+              onClick={() => setPortionOpen(!portionOpen)}
+              className="w-full flex items-center justify-between px-3 py-2 hover:bg-violet-50/50 dark:hover:bg-violet-950/30 transition-colors"
+            >
+              <span className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                📏 {t.dashboard.portionLabel}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+                  {portionAmount} {t.dashboard[BIRIM_TRANSLATION_KEYS[portionUnit] as keyof typeof t.dashboard]}
+                </span>
+                {portionOpen ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
               </div>
-              {/* Hızlı miktar butonları */}
-              <div className="flex gap-1">
-                {[0.5, 1, 1.5, 2, 3].map((val) => (
+            </button>
+            {portionOpen && (
+              <div className="px-3 pb-3 pt-1 border-t border-violet-100 dark:border-violet-900">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center rounded-lg border border-border bg-background">
+                    <button
+                      onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
+                      className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
+                      disabled={portionAmount <= 0.5}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      value={portionAmount}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val) && val > 0) setPortionAmount(val);
+                      }}
+                      className="w-14 border-x border-border bg-transparent px-1 py-1.5 text-center text-sm font-semibold text-foreground focus:outline-none"
+                      min="0.5"
+                      step="0.5"
+                    />
+                    <button
+                      onClick={() => setPortionAmount(portionAmount + 0.5)}
+                      className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="flex gap-1">
+                    {[0.5, 1, 1.5, 2, 3].map((val) => (
+                      <button
+                        key={val}
+                        onClick={() => setPortionAmount(val)}
+                        className={cn(
+                          "rounded-md px-2 py-1.5 text-xs font-medium transition-all",
+                          portionAmount === val
+                            ? "bg-violet-600 text-white shadow-sm"
+                            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        {val}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
+                    const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
+                    const label = t.dashboard[translationKey] || key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setPortionUnit(key)}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                          portionUnit === key
+                            ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
+                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <span className="text-[11px]">{icon}</span>
+                        {label}
+                      </button>
+                    );
+                  })}
                   <button
-                    key={val}
-                    onClick={() => setPortionAmount(val)}
-                    className={cn(
-                      "rounded-md px-2 py-1.5 text-xs font-medium transition-all",
-                      portionAmount === val
-                        ? "bg-violet-600 text-white shadow-sm"
-                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
+                    onClick={() => setShowAllUnits(!showAllUnits)}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
                   >
-                    {val}
+                    {showAllUnits ? "▲ Daha az" : `▼ +${BIRIM_KATEGORILERI.length - 8}`}
                   </button>
-                ))}
+                </div>
               </div>
-            </div>
-            {/* Birim seçimi - popüler birimler */}
-            <div className="flex flex-wrap gap-1.5">
-              {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
-                const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
-                const label = t.dashboard[translationKey] || key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setPortionUnit(key)}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all",
-                      portionUnit === key
-                        ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
-                        : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <span className="text-[11px]">{icon}</span>
-                    {label}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setShowAllUnits(!showAllUnits)}
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
-              >
-                {showAllUnits ? "▲ Daha az" : `▼ +${BIRIM_KATEGORILERI.length - 8} birim`}
-              </button>
-            </div>
-            {/* Seçili porsiyon özeti */}
-            <div className="mt-2 text-xs text-muted-foreground">
-              📏 <span className="font-medium text-foreground">{portionAmount} {t.dashboard[BIRIM_TRANSLATION_KEYS[portionUnit] as keyof typeof t.dashboard]}</span>
-            </div>
+            )}
           </div>
 
           {addError && <p className="mt-2 text-xs text-red-500">{addError}</p>}

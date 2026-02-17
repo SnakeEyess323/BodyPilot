@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -65,6 +66,8 @@ export function YemekProgramProvider({ children }: { children: ReactNode }) {
   const [translations, setTranslations] = useState<Partial<Record<Lang, string>>>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const abortRef = useRef<AbortController | null>(null);
+
   // Compute display content based on current language
   const displayContent = useMemo(() => {
     const lang = language as Lang;
@@ -74,6 +77,61 @@ export function YemekProgramProvider({ children }: { children: ReactNode }) {
     return content; // fallback to original
   }, [language, sourceLang, content, translations]);
 
+  // On-demand translation for existing programs without cached translations
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+    if (!content || !content.trim()) return;
+
+    const lang = language as Lang;
+    if (lang === sourceLang) return;
+
+    const existing = translations[lang];
+    if (existing && existing.trim()) return;
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "meal",
+        sourceLang,
+        content,
+        targetLangs: [lang],
+      }),
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (controller.signal.aborted) return;
+        if (d.translations) {
+          setTranslations((prev) => {
+            const next = { ...prev, ...d.translations };
+            if (user) {
+              const stored: StoredYemek = {
+                content,
+                sourceLang,
+                translations: next,
+              };
+              setUserStorageJSON(STORAGE_KEY, user.id, stored);
+              setUserData(STORAGE_KEY, stored).catch(() => {});
+            }
+            return next;
+          });
+        }
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") return;
+        console.error("On-demand meal translation error:", err);
+      });
+
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, sourceLang, isLoaded, user]);
+
+  // Load from storage
   useEffect(() => {
     setContentState("");
     setTranslations({});

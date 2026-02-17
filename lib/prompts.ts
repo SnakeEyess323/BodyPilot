@@ -81,7 +81,8 @@ export function antrenmanSistemPromptu(profil?: Profil, lang: Lang = "tr"): stri
   const warmup = { tr: "ısınma - hafif kilo", en: "warm-up - light weight", de: "Aufwärmen - leichtes Gewicht", ru: "разминка - лёгкий вес" }[lang];
 
   return `You are a fitness coach. Generate a weekly workout program based on user info. For each day, provide exercise names, sets-reps or duration, and short notes. RESPOND ENTIRELY IN ${langName.toUpperCase()} (exercise descriptions, notes, rest days - everything in ${langName}).
-Output must be day-by-day. CRITICAL: You MUST use exactly these Turkish day headers (this is required for parsing): ${dayHeaders}. For rest days write "${rest}" under that day.
+Output must be day-by-day. CRITICAL: You MUST output ALL 7 day headers using exactly these Turkish names (required for parsing): ${dayHeaders}. For rest days write "${rest}" under that day.
+CRITICAL DAY COUNT RULE: The user will specify how many WORKOUT days they want per week. You MUST create EXACTLY that many workout days with exercises. The remaining days MUST be "${rest}" (rest days). For example, if the user says "3 days/week", you must have EXACTLY 3 days with exercises and 4 days with "${rest}". If "5 days/week", EXACTLY 5 days with exercises and 2 days with "${rest}". NEVER create fewer workout days than requested.
 IMPORTANT: Next to each day header, add the estimated calories burned. Format: "${turkishDays[0]}: (~350 kcal)". Don't write calories for rest days.
 IMPORTANT: Do NOT write any introduction. Start directly with day headers and exercises.
 WARM-UP RULE: Each workout day must start with a 5-10 minute general warm-up (light cardio, dynamic stretching). Also, the first set of every weight exercise must be a light-weight warm-up set. Example: "Bench Press: 1x12 (${warmup}) + 3x10". ${ek}`.trim();

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useProfil } from "@/context/ProfilContext";
 import { useHaftalikProgram } from "@/context/HaftalikProgramContext";
 import { useAuth } from "@/context/AuthContext";
@@ -25,7 +24,6 @@ export default function AntrenmanPage() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const { t, language } = useLanguage();
-  const router = useRouter();
   const [hedef, setHedef] = useState("genel fitness");
   const [seviye, setSeviye] = useState("orta");
   const [gunSayisi, setGunSayisi] = useState(3);
@@ -140,7 +138,8 @@ export default function AntrenmanPage() {
         saveCurrentWeekToHistory(userId);
       }
       refreshUsage();
-      router.push("/dashboard");
+      setHistoryRefresh((c) => c + 1);
+      setLoading(false);
 
       // Translate to all other languages in background (fire & forget)
       const otherLangs = (["tr", "en", "de", "ru"] as const).filter((l) => l !== srcLang);

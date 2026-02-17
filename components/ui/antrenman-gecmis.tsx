@@ -282,6 +282,8 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
   const userId = user?.id ?? "";
   const [history, setHistory] = useState<AntrenmanGecmisHafta[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+  const INITIAL_WEEKS = 2;
   const [selectedDetail, setSelectedDetail] = useState<{
     week: AntrenmanGecmisHafta;
     gun: GunAdi;
@@ -406,7 +408,7 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
-              {history.map((week) => (
+              {(showAll ? history : history.slice(0, INITIAL_WEEKS)).map((week) => (
                 <WeekRow
                   key={week.weekKey}
                   week={week}
@@ -425,6 +427,28 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
               ))}
             </tbody>
           </table>
+
+          {history.length > INITIAL_WEEKS && (
+            <div className="flex justify-center pt-2 pb-1">
+              <button
+                type="button"
+                onClick={() => setShowAll((p) => !p)}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors px-4 py-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/30"
+              >
+                {showAll ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    {t.extra.showLess}
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    {t.extra.showMore} ({history.length - INITIAL_WEEKS})
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

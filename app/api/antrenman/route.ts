@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
     const userLang = lang || "tr";
     
     // Build user prompt with optional muscle targeting
-    let userPrompt = `Goal: ${hedef || "general fitness"}. Level: ${seviye || "intermediate"}. ${gunSayisi ?? 3} days/week. Environment: ${ortam || "gym"}.`;
+    const days = gunSayisi ?? 3;
+    let userPrompt = `Goal: ${hedef || "general fitness"}. Level: ${seviye || "intermediate"}. EXACTLY ${days} workout days per week (${7 - days} rest days). Environment: ${ortam || "gym"}.`;
     
     if (hedefKaslar && hedefKaslar.length > 0) {
       userPrompt += ` PRIORITY MUSCLE GROUPS: ${hedefKaslar.join(", ")}. Create a program targeting these muscle groups with specific exercises.`;

@@ -74,6 +74,7 @@ export default function AbonelikPage() {
         setShowCancelConfirm(false);
         await fetchDetails();
         await refreshUsage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setCancelResult("error");
       }
@@ -141,7 +142,14 @@ export default function AbonelikPage() {
       {cancelResult === "success" && (
         <div className="mb-6 flex items-center gap-3 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4">
           <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
-          <p className="text-sm text-green-700 dark:text-green-400">{t.profile.cancelSuccess}</p>
+          <div className="text-sm text-green-700 dark:text-green-400">
+            <p>{t.profile.cancelSuccess}</p>
+            {sub?.current_period_end && (
+              <p className="mt-1 font-medium">
+                {t.profile.activeUntil}: {formatDate(sub.current_period_end)}
+              </p>
+            )}
+          </div>
         </div>
       )}
       {cancelResult === "error" && (
@@ -284,6 +292,22 @@ export default function AbonelikPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Resubscribe Section - shown when cancellation is scheduled */}
+      {isPro && isCancelScheduled && (
+        <div className="rounded-2xl border border-violet-200 dark:border-violet-900/50 bg-card p-6 shadow-sm text-center">
+          <p className="text-sm text-muted-foreground mb-4">
+            {t.profile.resubscribeDesc}
+          </p>
+          <button
+            onClick={() => router.push("/fiyatlandirma")}
+            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white px-6 py-2.5 text-sm font-medium transition"
+          >
+            <Crown className="h-4 w-4" />
+            {t.profile.resubscribe}
+          </button>
         </div>
       )}
     </div>

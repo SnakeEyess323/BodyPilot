@@ -21,6 +21,7 @@ import {
 } from "@/lib/user-storage";
 
 const STORAGE_KEY = "spor-asistan-yemek-programi";
+const TRANSLATION_VERSION = 2;
 
 type Lang = "tr" | "en" | "de" | "ru";
 
@@ -28,6 +29,7 @@ interface StoredYemek {
   content: string;
   sourceLang?: Lang;
   translations?: Partial<Record<Lang, string>>;
+  translationVersion?: number;
 }
 
 interface YemekProgramContextValue {
@@ -114,6 +116,7 @@ export function YemekProgramProvider({ children }: { children: ReactNode }) {
                 content,
                 sourceLang,
                 translations: next,
+                translationVersion: TRANSLATION_VERSION,
               };
               setUserStorageJSON(STORAGE_KEY, user.id, stored);
               setUserData(STORAGE_KEY, stored).catch(() => {});
@@ -148,7 +151,9 @@ export function YemekProgramProvider({ children }: { children: ReactNode }) {
     if (localData && typeof localData === "object" && "content" in localData) {
       setContentState(localData.content || "");
       if (localData.sourceLang) setSourceLang(localData.sourceLang);
-      if (localData.translations) setTranslations(localData.translations);
+      if (localData.translations && localData.translationVersion === TRANSLATION_VERSION) {
+        setTranslations(localData.translations);
+      }
     } else {
       // Fallback to old format (plain string)
       const oldData = getUserStorage(STORAGE_KEY, user.id);
@@ -164,8 +169,15 @@ export function YemekProgramProvider({ children }: { children: ReactNode }) {
         if (typeof remoteData === "object" && "content" in remoteData) {
           setContentState(remoteData.content || "");
           if (remoteData.sourceLang) setSourceLang(remoteData.sourceLang);
-          if (remoteData.translations) setTranslations(remoteData.translations);
-          setUserStorageJSON(STORAGE_KEY, user.id, remoteData);
+          const validTrans = remoteData.translationVersion === TRANSLATION_VERSION
+            ? (remoteData.translations || {})
+            : {};
+          setTranslations(validTrans);
+          setUserStorageJSON(STORAGE_KEY, user.id, {
+            ...remoteData,
+            translations: validTrans,
+            translationVersion: TRANSLATION_VERSION,
+          });
         } else {
           const val = typeof remoteData === "string" ? remoteData : JSON.stringify(remoteData);
           setContentState(val);
@@ -182,6 +194,7 @@ export function YemekProgramProvider({ children }: { children: ReactNode }) {
           content: data,
           sourceLang: lang || sourceLang,
           translations: trans,
+          translationVersion: TRANSLATION_VERSION,
         };
         setUserStorageJSON(STORAGE_KEY, user.id, stored);
         setUserData(STORAGE_KEY, stored).catch(() => {});

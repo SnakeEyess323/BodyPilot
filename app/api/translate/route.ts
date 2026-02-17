@@ -104,6 +104,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
+const LANG_EXAMPLES: Record<Lang, string> = {
+  tr: 'Isınma: 5-10 dk hafif kardiyo\nBench Press: 1x12 (ısınma) + 3x10\nDinlenme',
+  en: 'Warm-up: 5-10 min light cardio\nBench Press: 1x12 (warm-up) + 3x10\nRest',
+  de: 'Aufwärmen: 5-10 Min leichtes Cardio\nBankdrücken: 1x12 (Aufwärmen) + 3x10\nRuhetag',
+  ru: 'Разминка: 5-10 мин лёгкое кардио\nЖим лёжа: 1x12 (разминка) + 3x10\nОтдых',
+};
+
+const MEAL_EXAMPLES: Record<Lang, string> = {
+  tr: 'KAHVALTI:\n**Yumurtalı Tost**\n- **Malzemeler:** 2 yumurta, 2 dilim ekmek',
+  en: 'BREAKFAST:\n**Egg Toast**\n- **Ingredients:** 2 eggs, 2 slices bread',
+  de: 'FRÜHSTÜCK:\n**Eier-Toast**\n- **Zutaten:** 2 Eier, 2 Scheiben Brot',
+  ru: 'ЗАВТРАК:\n**Тост с яйцами**\n- **Ингредиенты:** 2 яйца, 2 ломтика хлеба',
+};
+
 async function translateWorkout(
   openai: ReturnType<typeof getOpenAI> & object,
   program: Record<string, string>,
@@ -115,25 +129,32 @@ async function translateWorkout(
   if (dayEntries.length === 0) return { ...program };
 
   const langName = LANG_NAMES[targetLang];
+  const example = LANG_EXAMPLES[targetLang];
   const programText = dayEntries
     .map(([day, content]) => `=== ${day} ===\n${content}`)
     .join("\n\n");
 
-  const systemPrompt = `You are a fitness content translator. Translate the workout program content to ${langName}.
+  const systemPrompt = `You are a fitness content translator. Your task is to translate workout program content into ${langName}.
+
+CRITICAL: Every single word of your output MUST be in ${langName}. Do NOT output any English, Turkish, or other language text. ALL exercise names, descriptions, notes, warm-up instructions, cool-down instructions, and rest day markers must be written in ${langName}.
+
+Example output in ${langName}:
+${example}
 
 RULES:
-- Translate exercise names, descriptions, notes, and instructions to ${langName}.
-- KEEP the exact same format: sets, reps, weights, time durations, numbers stay unchanged.
-- KEEP special characters like **, -, •, numbers, "kcal", "kg", "x" (as in 3x10).
-- KEEP the day separator lines (=== DayName ===) EXACTLY as they are - do NOT translate day names.
+- Translate ALL exercise names to their ${langName} equivalents (e.g. "Bench Press" → "${targetLang === 'de' ? 'Bankdrücken' : targetLang === 'ru' ? 'Жим лёжа' : targetLang === 'tr' ? 'Bench Press' : 'Bench Press'}").
+- Translate ALL descriptions, notes, warm-up/cool-down instructions to ${langName}.
+- KEEP numbers, sets, reps, weights, durations unchanged (3x10, 5 dk/min, kcal, kg).
+- KEEP special characters: **, -, •, numbers.
+- KEEP the day separator lines (=== DayName ===) EXACTLY as they are - do NOT translate day names in separators.
 - Do NOT add any introduction or explanation. Output ONLY the translated content.
-- If content is a rest day marker (like "Dinlenme", "Rest", "Ruhetag", "Отдых"), translate it to the ${langName} equivalent.`;
+- Rest day markers must be in ${langName}: "${targetLang === 'de' ? 'Ruhetag' : targetLang === 'ru' ? 'Отдых' : targetLang === 'tr' ? 'Dinlenme' : 'Rest'}".`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: programText },
+      { role: "user", content: `Translate the following workout program to ${langName}. Remember: EVERY word must be in ${langName}.\n\n${programText}` },
     ],
     max_tokens: 3000,
     temperature: 0.3,
@@ -162,21 +183,27 @@ async function translateMeal(
   if (!content.trim()) return content;
 
   const langName = LANG_NAMES[targetLang];
+  const example = MEAL_EXAMPLES[targetLang];
 
-  const systemPrompt = `You are a nutrition content translator. Translate the meal program to ${langName}.
+  const systemPrompt = `You are a nutrition content translator. Your task is to translate a meal program into ${langName}.
+
+CRITICAL: Every single word of your output MUST be in ${langName}. Do NOT output any English, Turkish, or other language text. ALL food names, ingredients, recipe steps, meal headers, and descriptions must be written in ${langName}.
+
+Example output in ${langName}:
+${example}
 
 RULES:
-- Translate food names, ingredients, recipe steps, and descriptions to ${langName}.
-- KEEP the exact same format: quantities, calories, macros, numbers stay unchanged.
-- KEEP special characters like **, -, •, numbers, "kcal", "g".
-- KEEP meal category headers in ${langName} (e.g. BREAKFAST, LUNCH, DINNER, SNACK in ${langName}).
+- Translate ALL food names, ingredients, recipe steps, and descriptions to ${langName}.
+- Translate meal category headers to ${langName} equivalents.
+- KEEP numbers, quantities, calories, macros unchanged (kcal, g).
+- KEEP special characters: **, -, •, numbers.
 - Do NOT add any introduction or explanation. Output ONLY the translated content.`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content },
+      { role: "user", content: `Translate the following meal program to ${langName}. Remember: EVERY word must be in ${langName}.\n\n${content}` },
     ],
     max_tokens: 3000,
     temperature: 0.3,

@@ -20,6 +20,8 @@ import {
 } from "@/lib/user-storage";
 
 const STORAGE_KEY = "spor-asistan-haftalik-program";
+// Bump this when translate prompt changes to invalidate cached translations
+const TRANSLATION_VERSION = 2;
 
 type Lang = "tr" | "en" | "de" | "ru";
 const ALL_LANGS: Lang[] = ["tr", "en", "de", "ru"];
@@ -49,6 +51,7 @@ interface StoredProgram {
   program: HaftalikProgram;
   sourceLang?: Lang;
   translations?: Partial<Record<Lang, HaftalikProgram>>;
+  translationVersion?: number;
 }
 
 interface HaftalikProgramContextValue {
@@ -146,13 +149,13 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
         if (d.translations) {
           setTranslations((prev) => {
             const next = { ...prev, ...d.translations };
-            // Persist with updated translations
             if (user) {
               const stored: StoredProgram = {
                 weekKey: getCurrentWeekKey(),
                 program,
                 sourceLang,
                 translations: next,
+                translationVersion: TRANSLATION_VERSION,
               };
               setUserStorageJSON(STORAGE_KEY, user.id, stored);
               setUserData(STORAGE_KEY, stored).catch(() => {});
@@ -194,7 +197,10 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
           const prog = { ...emptyProgram(), ...localRaw.program };
           setProgramState(prog);
           if (localRaw.sourceLang) setSourceLang(localRaw.sourceLang);
-          if (localRaw.translations) setTranslations(localRaw.translations);
+          // Only load translations if version matches (invalidate stale translations)
+          if (localRaw.translations && localRaw.translationVersion === TRANSLATION_VERSION) {
+            setTranslations(localRaw.translations);
+          }
         }
       }
     }
@@ -208,12 +214,17 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
             const merged = { ...emptyProgram(), ...remoteData.program };
             setProgramState(merged);
             if (remoteData.sourceLang) setSourceLang(remoteData.sourceLang);
-            if (remoteData.translations) setTranslations(remoteData.translations);
+            // Only use translations if version matches
+            const validTrans = remoteData.translationVersion === TRANSLATION_VERSION
+              ? (remoteData.translations || {})
+              : {};
+            setTranslations(validTrans);
             setUserStorageJSON(STORAGE_KEY, user.id, {
               weekKey: currentWeek,
               program: merged,
               sourceLang: remoteData.sourceLang || "tr",
-              translations: remoteData.translations || {},
+              translations: validTrans,
+              translationVersion: TRANSLATION_VERSION,
             });
           }
         }
@@ -229,6 +240,7 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
           program: data,
           sourceLang: lang || sourceLang,
           translations: trans,
+          translationVersion: TRANSLATION_VERSION,
         };
         setUserStorageJSON(STORAGE_KEY, user.id, stored);
         setUserData(STORAGE_KEY, stored).catch(() => {});

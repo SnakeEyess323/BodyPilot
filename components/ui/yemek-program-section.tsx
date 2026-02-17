@@ -64,18 +64,18 @@ function getTodayKey(): string {
 
 function loadSelectedMeals(userId: string): SeciliYemekler {
   if (!userId) return DEFAULT_SECILI;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = getUserStorageJSON<any>(SELECTED_MEALS_KEY, userId);
+  const raw = getUserStorageJSON<Record<string, unknown>>(SELECTED_MEALS_KEY, userId);
   if (!raw) return DEFAULT_SECILI;
   if ("tarih" in raw && "secili" in raw) {
     if (raw.tarih === getTodayKey()) {
-      const s = raw.secili;
+      const s = raw.secili as Record<string, unknown> | undefined;
+      if (!s) return DEFAULT_SECILI;
       // Backward compat: old format had string|null, convert to string[]
       const result: SeciliYemekler = { ...DEFAULT_SECILI };
       for (const ogun of ["kahvalti", "ogle", "aksam", "ara"] as OgunTipi[]) {
         const val = s[ogun];
         if (Array.isArray(val)) {
-          result[ogun] = val;
+          result[ogun] = val as string[];
         } else if (typeof val === "string") {
           result[ogun] = [val];
         }

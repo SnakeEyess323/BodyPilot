@@ -98,17 +98,6 @@ function parseMakrolar(makrolarStr?: string): { protein: number; karbonhidrat: n
 }
 
 // =============================================================================
-// OGUN LABELS
-// =============================================================================
-
-const OGUN_LABELS: Record<OgunTipi, { label: string; icon: string }> = {
-  kahvalti: { label: "Kahvaltı", icon: "🌅" },
-  ogle: { label: "Öğle", icon: "☀️" },
-  aksam: { label: "Akşam", icon: "🌙" },
-  ara: { label: "Ara", icon: "🍎" },
-};
-
-// =============================================================================
 // YemekGecmisDialog
 // =============================================================================
 
@@ -121,8 +110,16 @@ function YemekGecmisDialog({
   onOpenChange: (v: boolean) => void;
   userId: string;
 }) {
+  const { t } = useLanguage();
   const [history, setHistory] = useState<YemekGecmisGun[]>([]);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+
+  const OGUN_LABELS: Record<OgunTipi, { label: string; icon: string }> = useMemo(() => ({
+    kahvalti: { label: t.meals.breakfast, icon: "🌅" },
+    ogle: { label: t.meals.lunch, icon: "☀️" },
+    aksam: { label: t.meals.dinner, icon: "🌙" },
+    ara: { label: t.meals.snack, icon: "🍎" },
+  }), [t]);
 
   useEffect(() => {
     if (open && userId) {
@@ -166,7 +163,7 @@ function YemekGecmisDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TableProperties className="h-5 w-5 text-primary" />
-            Beslenme Geçmişi
+            {t.extra.nutritionHistory}
           </DialogTitle>
         </DialogHeader>
 

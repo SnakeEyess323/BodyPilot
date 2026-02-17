@@ -13,7 +13,7 @@ import { UpgradeModal } from "@/components/ui/upgrade-modal";
 export default function YemekPage() {
   const { profil, setProfil, isLoaded } = useProfil();
   const { content: yemekContent, setContent: setYemekProgram } = useYemekProgram();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const hasYemekProgram = yemekContent.trim().length > 0;
   const [kaloriHedefi, setKaloriHedefi] = useState("");
@@ -50,6 +50,7 @@ export default function YemekPage() {
           kisitlar: kisitlar.trim() || "yok",
           gunSayisi,
           profil,
+          lang: language,
         }),
       });
       const data = await res.json();

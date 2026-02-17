@@ -74,8 +74,8 @@ export function EventManager({
     { name: t.calendar.colors.red, value: "red", bg: "bg-red-500", text: "text-red-700" },
   ]
   
-  const categories = customCategories || ["Toplantı", "Görev", "Hatırlatıcı", "Kişisel"]
-  const availableTags = customTags || ["Önemli", "Acil", "İş", "Kişisel", "Takım", "Müşteri"]
+  const categories = customCategories || t.extra.eventCategories
+  const availableTags = customTags || t.extra.eventTags
   
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [currentDate, setCurrentDate] = useState(new Date())

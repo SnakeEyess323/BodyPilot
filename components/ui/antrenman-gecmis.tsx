@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Dialog,
   DialogContent,
@@ -32,26 +33,7 @@ import type { GunAdi } from "@/lib/types";
 // =============================================================================
 // CONSTANTS
 // =============================================================================
-
-const GUN_SIRASI: GunAdi[] = [
-  "Pazartesi",
-  "Salı",
-  "Çarşamba",
-  "Perşembe",
-  "Cuma",
-  "Cumartesi",
-  "Pazar",
-];
-
-const GUN_KISA: Record<GunAdi, string> = {
-  Pazartesi: "Pzt",
-  Salı: "Sal",
-  Çarşamba: "Çar",
-  Perşembe: "Per",
-  Cuma: "Cum",
-  Cumartesi: "Cmt",
-  Pazar: "Paz",
-};
+// Note: Day names and abbreviations are now accessed via translations
 
 // =============================================================================
 // HELPERS
@@ -71,9 +53,9 @@ function isRestDay(content: string): boolean {
 }
 
 /** Icerik ozetini cikarir. Ornegin "Gogus + Triceps" */
-function getContentSummary(content: string): string {
-  if (!content || content.trim() === "") return "Dinlenme";
-  if (isRestDay(content)) return "Dinlenme";
+function getContentSummary(content: string, restText: string): string {
+  if (!content || content.trim() === "") return restText;
+  if (isRestDay(content)) return restText;
 
   // Satir baslarindaki ana kas gruplarini veya ilk satiri al
   const lines = content.split("\n").filter((l) => l.trim());
@@ -95,11 +77,12 @@ interface DayCellProps {
   completed: boolean;
   isCurrentWeek: boolean;
   onClick: () => void;
+  restText: string;
 }
 
-function DayCell({ content, completed, isCurrentWeek, onClick }: DayCellProps) {
+function DayCell({ content, completed, isCurrentWeek, onClick, restText }: DayCellProps) {
   const rest = isRestDay(content);
-  const summary = getContentSummary(content);
+  const summary = getContentSummary(content, restText);
   const hasContent = content && content.trim() !== "";
 
   return (
@@ -143,7 +126,7 @@ function DayCell({ content, completed, isCurrentWeek, onClick }: DayCellProps) {
               : "text-foreground/80"
         )}
       >
-        {rest ? "😴 Dinlenme" : summary}
+        {rest ? `😴 ${restText}` : summary}
       </span>
     </button>
   );
@@ -158,11 +141,14 @@ interface WeekRowProps {
   isCurrentWeek: boolean;
   onCellClick: (week: AntrenmanGecmisHafta, gun: GunAdi) => void;
   onCopyWeek?: (program: Record<string, string>) => void;
+  t: any;
 }
 
-function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek }: WeekRowProps) {
+function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek, t }: WeekRowProps) {
   const label = getWeekLabel(week.weekKey, week.startDate);
-  const workoutDays = GUN_SIRASI.filter(
+  const dayNames = [...t.extra.dayNames] as GunAdi[];
+  const dayAbbr = [...t.extra.dayAbbr];
+  const workoutDays = dayNames.filter(
     (g) => !isRestDay(week.program[g] || "")
   );
   const completedCount = workoutDays.filter((g) =>
@@ -207,24 +193,25 @@ function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek }: WeekRowProps)
                 onCopyWeek(week.program);
               }}
               className="mt-1 inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
-              title="Bu haftanın programını tekrar kullan"
+              title={t.extra.copyWeekTitle}
             >
               <Copy className="h-3 w-3" />
-              <span className="hidden sm:inline">Aynısını Ekle</span>
-              <span className="sm:hidden">Ekle</span>
+              <span className="hidden sm:inline">{t.extra.copyWeek}</span>
+              <span className="sm:hidden">{t.extra.copyWeekShort}</span>
             </button>
           )}
         </div>
       </td>
 
       {/* Gun hucreleri */}
-      {GUN_SIRASI.map((gun) => (
+      {dayNames.map((gun, index) => (
         <td key={gun} className="py-2 px-0.5 sm:px-1 align-middle">
           <DayCell
             content={week.program[gun] || ""}
             completed={week.completed.includes(gun)}
             isCurrentWeek={isCurrentWeek}
             onClick={() => onCellClick(week, gun)}
+            restText={t.extra.rest}
           />
         </td>
       ))}
@@ -281,6 +268,7 @@ interface AntrenmanGecmisProps {
 
 export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: AntrenmanGecmisProps) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const userId = user?.id ?? "";
   const [history, setHistory] = useState<AntrenmanGecmisHafta[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -289,6 +277,9 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
     gun: GunAdi;
   } | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  
+  const dayNames = [...t.extra.dayNames] as GunAdi[];
+  const dayAbbr = [...t.extra.dayAbbr];
 
   // Gecmisi yukle (user-scoped)
   useEffect(() => {
@@ -321,17 +312,17 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
             <History className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">Antrenman Geçmişi</h3>
+            <h3 className="font-semibold text-foreground">{t.extra.workoutHistory}</h3>
             <p className="text-xs text-muted-foreground">
-              Haftalık antrenman geçmişiniz burada görüntülenir
+              {t.extra.workoutHistoryDesc}
             </p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
           <Calendar className="h-12 w-12 mb-3 opacity-30" />
-          <p className="text-sm">Henüz antrenman geçmişi yok</p>
+          <p className="text-sm">{t.extra.noWorkoutHistory}</p>
           <p className="text-xs mt-1">
-            Program oluşturup antrenmanlarınızı tamamladıkça burada görünecek
+            {t.extra.noWorkoutHistoryDesc}
           </p>
         </div>
       </div>
@@ -351,10 +342,10 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
           </div>
           <div className="text-left">
             <h3 className="font-semibold text-foreground">
-              Antrenman Geçmişi
+              {t.extra.workoutHistory}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Son {history.length} hafta
+              {t.extra.lastWeeks.replace("{count}", history.length.toString())}
             </p>
           </div>
         </div>
@@ -365,7 +356,7 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
               const totalWorkouts = history.reduce(
                 (acc, w) =>
                   acc +
-                  GUN_SIRASI.filter((g) => !isRestDay(w.program[g] || "")).filter(
+                  dayNames.filter((g) => !isRestDay(w.program[g] || "")).filter(
                     (g) => w.completed.includes(g)
                   ).length,
                 0
@@ -373,7 +364,7 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
               return (
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Dumbbell className="h-3.5 w-3.5" />
-                  {totalWorkouts} antrenman
+                  {totalWorkouts} {t.extra.workouts}
                 </span>
               );
             })()}
@@ -394,18 +385,18 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
               <tr className="border-b border-border/60">
                 <th className="py-2 px-2 sm:px-3 text-left text-xs font-semibold text-muted-foreground w-[100px]">
                   <Clock className="h-3.5 w-3.5 inline mr-1" />
-                  Hafta
+                  {t.extra.week}
                 </th>
-                {GUN_SIRASI.map((gun) => (
+                {dayNames.map((gun, index) => (
                   <th
                     key={gun}
                     className="py-2 px-0.5 sm:px-1 text-center text-xs font-semibold text-muted-foreground"
                   >
-                    {GUN_KISA[gun]}
+                    {dayAbbr[index]}
                   </th>
                 ))}
                 <th className="py-2 px-2 sm:px-3 text-center text-xs font-semibold text-muted-foreground w-[60px]">
-                  Durum
+                  {t.extra.status}
                 </th>
               </tr>
             </thead>
@@ -417,6 +408,7 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
                   isCurrentWeek={week.weekKey === currentWeekKey}
                   onCellClick={handleCellClick}
                   onCopyWeek={onCopyWeek}
+                  t={t}
                 />
               ))}
             </tbody>
@@ -450,13 +442,13 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
                     selectedDetail.gun
                   ) && (
                     <span className="text-xs bg-violet-500/20 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full">
-                      ✓ Tamamlandı
+                      ✓ {t.extra.completed}
                     </span>
                   )}
                 </div>
                 <DialogTitle className="text-xl flex items-center gap-2">
                   <Dumbbell className="h-5 w-5 text-violet-500" />
-                  {selectedDetail.gun} Antrenmanı
+                  {selectedDetail.gun} {t.extra.workout}
                 </DialogTitle>
               </DialogHeader>
 
@@ -464,7 +456,7 @@ export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: Antre
                 <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 p-4 border border-violet-200 dark:border-violet-800">
                   <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                     <Dumbbell className="h-4 w-4 text-violet-500" />
-                    Antrenman Detayları
+                    {t.extra.workoutDetails}
                   </h4>
                   <div className="text-foreground/90 text-sm whitespace-pre-line leading-relaxed max-h-[400px] overflow-y-auto">
                     {selectedDetail.week.program[selectedDetail.gun]}

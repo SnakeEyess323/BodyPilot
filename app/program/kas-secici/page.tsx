@@ -10,80 +10,10 @@ import { Sparkles, Target, Dumbbell, ArrowRight, ChevronDown, ChevronUp } from "
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function KasSeciciPage() {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleId[]>([]);
   const [muscleMapOpen, setMuscleMapOpen] = useState(true);
-
-  // Page texts
-  const pageTexts = {
-    tr: {
-      title: "Hedef Kas Seçici",
-      subtitle: "Egzersiz Önerileri",
-      description: "Vücut haritasından çalıştırmak istediğiniz kas gruplarını seçin, size o kaslara özel egzersiz önerileri sunalım.",
-      aiPowered: "Kişiselleştirilmiş Egzersiz Önerileri",
-      targetMuscles: "Hedef Kaslar",
-      readyToSee: "Egzersiz önerilerini aşağıda görebilirsiniz",
-      selectMusclesFirst: "Önce kas grupları seçin",
-      exercisesTitle: "Önerilen Egzersizler",
-      noExercises: "Egzersiz görmek için yukarıdan kas gruplarını seçin.",
-      muscleGroup: "kas grubu",
-      exercise: "egzersiz",
-      exercises: "egzersiz",
-      viewAllExercises: "Tüm Egzersizleri Gör",
-      createProgram: "Bu Kaslarla Program Oluştur",
-    },
-    en: {
-      title: "Target Muscle Selector",
-      subtitle: "Exercise Suggestions",
-      description: "Select the muscle groups you want to target from the body map and get exercise suggestions specifically for those muscles.",
-      aiPowered: "Personalized Exercise Suggestions",
-      targetMuscles: "Target Muscles",
-      readyToSee: "See exercise suggestions below",
-      selectMusclesFirst: "Select muscle groups first",
-      exercisesTitle: "Recommended Exercises",
-      noExercises: "Select muscle groups above to see exercises.",
-      muscleGroup: "muscle group",
-      exercise: "exercise",
-      exercises: "exercises",
-      viewAllExercises: "View All Exercises",
-      createProgram: "Create Program with These Muscles",
-    },
-    de: {
-      title: "Zielmuskel-Auswahl",
-      subtitle: "Übungsvorschläge",
-      description: "Wählen Sie die Muskelgruppen aus der Körperkarte aus und erhalten Sie Übungsvorschläge speziell für diese Muskeln.",
-      aiPowered: "Personalisierte Übungsvorschläge",
-      targetMuscles: "Zielmuskeln",
-      readyToSee: "Übungsvorschläge unten ansehen",
-      selectMusclesFirst: "Wählen Sie zuerst Muskelgruppen",
-      exercisesTitle: "Empfohlene Übungen",
-      noExercises: "Wählen Sie oben Muskelgruppen aus, um Übungen zu sehen.",
-      muscleGroup: "Muskelgruppe",
-      exercise: "Übung",
-      exercises: "Übungen",
-      viewAllExercises: "Alle Übungen anzeigen",
-      createProgram: "Programm mit diesen Muskeln erstellen",
-    },
-    ru: {
-      title: "Выбор целевых мышц",
-      subtitle: "Рекомендации упражнений",
-      description: "Выберите группы мышц на карте тела и получите рекомендации упражнений специально для этих мышц.",
-      aiPowered: "Персонализированные рекомендации упражнений",
-      targetMuscles: "Целевые мышцы",
-      readyToSee: "Смотрите рекомендации упражнений ниже",
-      selectMusclesFirst: "Сначала выберите группы мышц",
-      exercisesTitle: "Рекомендуемые упражнения",
-      noExercises: "Выберите группы мышц выше, чтобы увидеть упражнения.",
-      muscleGroup: "группа мышц",
-      exercise: "упражнение",
-      exercises: "упражнений",
-      viewAllExercises: "Все упражнения",
-      createProgram: "Создать программу с этими мышцами",
-    },
-  };
-
-  const pt = pageTexts[language];
 
   // Get exercises for selected muscles, grouped by muscle
   const exercisesByMuscle = useMemo(() => {
@@ -117,17 +47,17 @@ export default function KasSeciciPage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-5 border border-primary/20">
             <Sparkles className="w-4 h-4" />
-            {pt.aiPowered}
+            {t.extra.personalizedExercises}
           </div>
 
           {/* Title */}
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 tracking-tight">
-            {pt.title}
+            {t.extra.targetMuscleSelector}
           </h1>
 
           {/* Description */}
           <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
-            {pt.description}
+            {t.extra.muscleSelectorDesc}
           </p>
         </motion.div>
 
@@ -148,11 +78,11 @@ export default function KasSeciciPage() {
                 <Target className="w-5 h-5 text-primary" />
               </div>
               <div className="text-left">
-                <h2 className="text-lg font-semibold text-foreground">{pt.targetMuscles}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{language === "tr" ? "Hedef Kaslar" : language === "en" ? "Target Muscles" : language === "de" ? "Zielmuskeln" : "Целевые мышцы"}</h2>
                 <p className="text-sm text-muted-foreground">
                   {selectedMuscles.length > 0
-                    ? `${selectedMuscles.length} ${pt.muscleGroup} · ${totalExercises} ${pt.exercises}`
-                    : pt.selectMusclesFirst}
+                    ? `${selectedMuscles.length} ${t.extra.muscleGroupsSelected} · ${totalExercises}`
+                    : t.extra.selectMusclesFirst}
                 </p>
               </div>
             </div>
@@ -216,10 +146,10 @@ export default function KasSeciciPage() {
           >
             <div className="text-center">
               <h2 className="text-2xl font-bold text-foreground mb-2">
-                {pt.exercisesTitle}
+                {t.extra.suggestedExercises}
               </h2>
               <p className="text-muted-foreground">
-                {totalExercises} {pt.exercises} · {selectedMuscles.length} {pt.muscleGroup}
+                {totalExercises} · {selectedMuscles.length} {t.extra.muscleGroupsSelected}
               </p>
             </div>
 
@@ -230,7 +160,7 @@ export default function KasSeciciPage() {
                 className="group inline-flex items-center justify-center gap-3 rounded-2xl border-2 border-primary bg-transparent px-8 py-4 font-semibold text-primary transition-all duration-300 hover:bg-primary/10 hover:shadow-lg"
               >
                 <Dumbbell className="w-5 h-5" />
-                {pt.viewAllExercises}
+                {t.extra.seeAllExercises}
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Link>
 
@@ -239,7 +169,7 @@ export default function KasSeciciPage() {
                 className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-10 py-4 font-semibold text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/25"
               >
                 <Sparkles className="w-5 h-5" />
-                {pt.createProgram}
+                {t.extra.createProgramWithMuscles}
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
@@ -279,7 +209,7 @@ export default function KasSeciciPage() {
             <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <Dumbbell className="w-8 h-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground text-lg">{pt.noExercises}</p>
+            <p className="text-muted-foreground text-lg">{t.extra.selectMusclesMessage}</p>
           </motion.div>
         )}
       </div>

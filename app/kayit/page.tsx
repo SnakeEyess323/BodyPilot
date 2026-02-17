@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function KayitPage() {
   return (
@@ -23,6 +24,7 @@ function KayitContent() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan"); // ?plan=pro
   const refParam = searchParams.get("ref"); // ?ref=INVITE_CODE
+  const { t } = useLanguage();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -42,7 +44,7 @@ function KayitContent() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Şifreler eşleşmiyor. Lütfen tekrar kontrol edin.");
+      setError(t.extra.passwordsDontMatch);
       setLoading(false);
       return;
     }
@@ -61,7 +63,7 @@ function KayitContent() {
 
     if (error) {
       if (error.message.includes("already registered")) {
-        setError("Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.");
+        setError(t.extra.emailAlreadyRegistered);
       } else {
         setError(error.message);
       }
@@ -117,18 +119,18 @@ function KayitContent() {
               <Mail className="h-8 w-8 text-primary" />
             </div>
             <h2 className="text-xl font-bold text-foreground mb-2">
-              E-postanızı Kontrol Edin
+              {t.extra.checkYourEmail}
             </h2>
             <p className="text-muted-foreground">
-              <strong>{email}</strong> adresine bir doğrulama bağlantısı gönderdik.
-              Hesabınızı aktifleştirmek için bağlantıya tıklayın.
+              <strong>{email}</strong> {t.extra.verificationSent}
+              {t.extra.activateAccount}
             </p>
           </div>
           <Link
             href="/giris"
             className="text-sm font-medium text-primary hover:underline"
           >
-            Giriş sayfasına dön
+            {t.extra.backToLogin}
           </Link>
         </div>
       </div>
@@ -158,7 +160,7 @@ function KayitContent() {
               BODYPILOT
             </span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Hesap Oluştur</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t.extra.createAccount}</h1>
           <p className="text-muted-foreground mt-2">
             {planParam === "pro"
               ? "Pro planla fitness yolculuğunuza başlayın"
@@ -231,13 +233,13 @@ function KayitContent() {
         {/* Email/Password Form */}
         <form onSubmit={handleEmailRegister} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Ad Soyad</Label>
+            <Label htmlFor="fullName">{t.extra.fullName}</Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Ad Soyad"
+                placeholder={t.extra.fullName}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="pl-10 h-12"
@@ -297,7 +299,7 @@ function KayitContent() {
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Şifrenizi tekrar girin"
+                placeholder={t.extra.confirmPassword}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className={`pl-10 pr-10 h-12 ${confirmPassword && password !== confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
@@ -317,7 +319,7 @@ function KayitContent() {
               </button>
             </div>
             {confirmPassword && password !== confirmPassword && (
-              <p className="text-xs text-destructive">Şifreler eşleşmiyor</p>
+              <p className="text-xs text-destructive">{t.extra.passwordsDontMatch}</p>
             )}
           </div>
 
@@ -332,7 +334,7 @@ function KayitContent() {
             className="w-full h-12 text-base font-medium"
             disabled={loading}
           >
-            {loading ? "Hesap oluşturuluyor..." : "Kayıt Ol"}
+            {loading ? t.extra.creatingAccount : t.extra.signUp}
           </Button>
         </form>
 
@@ -343,7 +345,7 @@ function KayitContent() {
             href="/giris"
             className="font-medium text-primary hover:underline"
           >
-            Giriş Yap
+            {t.extra.logIn}
           </Link>
         </p>
       </div>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { WatchAdModal, type AdRewardType } from "@/components/ui/watch-ad-modal";
 import { useSubscription } from "@/context/SubscriptionContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -15,28 +16,28 @@ interface UpgradeModalProps {
   remaining?: number;
 }
 
-const REASON_MESSAGES: Record<string, { title: string; description: string; icon: React.ReactNode }> = {
+const getReasonMessages = (t: any): Record<string, { title: string; description: string; icon: React.ReactNode }> => ({
   ai_chat: {
-    title: "AI Mesaj Limitine Ulaştınız",
-    description: "Günlük mesaj hakkınızı kullandınız. Pro planla sınırsız AI sohbet yapabilirsiniz veya reklam izleyerek ek hak kazanabilirsiniz.",
+    title: t.extra.aiLimitReached,
+    description: t.extra.aiLimitReachedDesc,
     icon: <MessageSquare className="h-6 w-6" />,
   },
   create_workout: {
-    title: "Antrenman Programı Limitine Ulaştınız",
-    description: "Bu hafta program oluşturdunuz. Pro ile sınırsız program oluşturun veya reklam izleyerek ek hak kazanın.",
+    title: t.extra.workoutLimitReached,
+    description: t.extra.workoutLimitReachedDesc,
     icon: <Dumbbell className="h-6 w-6" />,
   },
   create_meal: {
-    title: "Yemek Programı Limitine Ulaştınız",
-    description: "Bu hafta yemek programı oluşturdunuz. Pro ile sınırsız oluşturun veya reklam izleyerek ek hak kazanın.",
+    title: t.extra.mealLimitReached,
+    description: t.extra.mealLimitReachedDesc,
     icon: <Utensils className="h-6 w-6" />,
   },
   feature: {
-    title: "Pro Özellik",
-    description: "Bu özellik Pro plana özeldir. Hemen yükseltin ve tüm özelliklerin keyfini çıkarın.",
+    title: t.extra.proFeature,
+    description: t.extra.proFeatureDesc,
     icon: <Zap className="h-6 w-6" />,
   },
-};
+});
 
 const REASON_TO_AD_TYPE: Record<string, AdRewardType> = {
   ai_chat: "ai_chat",
@@ -46,9 +47,11 @@ const REASON_TO_AD_TYPE: Record<string, AdRewardType> = {
 
 export function UpgradeModal({ open, onClose, reason = "feature" }: UpgradeModalProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
   const { watchAdAvailable, refreshUsage } = useSubscription();
+  const REASON_MESSAGES = getReasonMessages(t);
   const msg = REASON_MESSAGES[reason] || REASON_MESSAGES.feature;
   const adType = REASON_TO_AD_TYPE[reason];
   const canWatchAd = watchAdAvailable && !!adType;
@@ -65,7 +68,7 @@ export function UpgradeModal({ open, onClose, reason = "feature" }: UpgradeModal
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Ödeme başlatılamadı");
+        throw new Error(data.error || t.extra.paymentError);
       }
 
       if (data.url) {
@@ -134,17 +137,19 @@ export function UpgradeModal({ open, onClose, reason = "feature" }: UpgradeModal
                   <Tv className="h-5 w-5" />
                 </div>
                 <div className="text-left flex-1">
-                  <p className="text-sm font-semibold text-foreground">Reklam İzle</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {t.ad.watchAd}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {adType === "ai_chat"
-                      ? "15 saniyelik reklam izleyerek +3 mesaj hakkı kazan"
+                      ? t.ad.bonusAiChat
                       : adType === "workout"
-                        ? "15 saniyelik reklam izleyerek +1 program hakkı kazan"
-                        : "15 saniyelik reklam izleyerek +1 program hakkı kazan"}
+                        ? t.ad.bonusWorkout
+                        : t.ad.bonusMeal}
                   </p>
                 </div>
                 <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase">
-                  Ücretsiz
+                  {t.ad.freeLabel}
                 </span>
               </button>
             )}
@@ -153,7 +158,7 @@ export function UpgradeModal({ open, onClose, reason = "feature" }: UpgradeModal
             {canWatchAd && (
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">veya</span>
+                <span className="text-xs text-muted-foreground">{t.ad.or}</span>
                 <div className="flex-1 h-px bg-border" />
               </div>
             )}
@@ -193,7 +198,7 @@ export function UpgradeModal({ open, onClose, reason = "feature" }: UpgradeModal
                 onClick={onClose}
                 disabled={isLoading}
               >
-                Vazgeç
+                {t.common.cancel}
               </Button>
               <Button
                 className={cn(
@@ -206,12 +211,12 @@ export function UpgradeModal({ open, onClose, reason = "feature" }: UpgradeModal
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Yönlendiriliyor...
+                    {t.common.loading}
                   </>
                 ) : (
                   <>
                     <Crown className="h-4 w-4" />
-                    Pro&apos;ya Yükselt
+                    {t.pricing.startNow}
                   </>
                 )}
               </Button>

@@ -71,7 +71,7 @@ export default function ProfilPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Portal açılamadı");
+        throw new Error(data.error || t.profile.portalError);
       }
 
       if (data.url) {
@@ -79,7 +79,7 @@ export default function ProfilPage() {
       }
     } catch (error) {
       console.error("Portal error:", error);
-      alert("Abonelik yönetimi açılamadı. Lütfen tekrar deneyin.");
+      alert(t.profile.portalError);
     } finally {
       setIsPortalLoading(false);
     }
@@ -110,12 +110,12 @@ export default function ProfilPage() {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">
-                {isPro ? "Pro Plan" : "Ücretsiz Plan"}
+                {isPro ? t.profile.proPlan : t.profile.freePlan}
               </h3>
               <p className="text-sm text-muted-foreground">
                 {isPro 
-                  ? "Tüm özelliklere sınırsız erişiminiz var" 
-                  : "Sınırlı erişim ile kullanıyorsunuz"}
+                  ? t.profile.proDesc 
+                  : t.profile.freeDesc}
               </p>
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function ProfilPage() {
               ) : (
                 <CreditCard className="h-4 w-4" />
               )}
-              Aboneliği Yönet
+              {t.profile.manageSubscription}
               <ExternalLink className="h-3 w-3" />
             </button>
           ) : (
@@ -147,7 +147,7 @@ export default function ProfilPage() {
               )}
             >
               <Crown className="h-4 w-4" />
-              Pro&apos;ya Yükselt
+              {t.profile.upgradeToPro}
             </button>
           )}
         </div>

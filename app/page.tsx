@@ -15,66 +15,62 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const features = [
-  {
-    icon: Dumbbell,
-    title: "AI Antrenman Programı",
-    description:
-      "Seviyenize, hedefinize ve müsaitliğinize göre kişiselleştirilmiş haftalık antrenman programı oluşturun.",
-    gradient: "from-orange-500 to-rose-500",
-    bgGlow: "bg-orange-500/10",
-  },
-  {
-    icon: Utensils,
-    title: "Kişisel Yemek Programı",
-    description:
-      "Kalori ve makro hedeflerinize uygun, öğün bazlı beslenme planı alın.",
-    gradient: "from-emerald-500 to-teal-500",
-    bgGlow: "bg-emerald-500/10",
-  },
-  {
-    icon: MessageSquare,
-    title: "AI Fitness Asistanı",
-    description:
-      "Antrenman, beslenme ve sağlık hakkında her şeyi sorabileceğiniz akıllı sohbet asistanı.",
-    gradient: "from-violet-500 to-purple-500",
-    bgGlow: "bg-violet-500/10",
-  },
-  {
-    icon: Images,
-    title: "Egzersiz Galerisi",
-    description:
-      "Kas gruplarına göre filtrelenmiş, görsellerle desteklenmiş geniş egzersiz kütüphanesi.",
-    gradient: "from-blue-500 to-cyan-500",
-    bgGlow: "bg-blue-500/10",
-  },
-  {
-    icon: Trophy,
-    title: "Challenge Sistemi",
-    description:
-      "Toplulukla birlikte challenge'lara katılın, yarışın ve motivasyonunuzu artırın.",
-    gradient: "from-amber-500 to-orange-500",
-    bgGlow: "bg-amber-500/10",
-  },
-  {
-    icon: TrendingUp,
-    title: "İlerleme Takibi",
-    description:
-      "XP kazanın, seviye atlayın, rozetler toplayın ve fitness yolculuğunuzu takip edin.",
-    gradient: "from-rose-500 to-pink-500",
-    bgGlow: "bg-rose-500/10",
-  },
-];
-
-const stats = [
-  { value: "AI", label: "Destekli Programlar" },
-  { value: "7/24", label: "Fitness Asistanı" },
-  { value: "100+", label: "Egzersiz Hareketi" },
-  { value: "4", label: "Dil Desteği" },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function LandingPage() {
+  const { t } = useLanguage();
+
+  const features = [
+    {
+      icon: Dumbbell,
+      title: t.extra.aiWorkoutProgram,
+      description: t.extra.aiWorkoutDesc,
+      gradient: "from-orange-500 to-rose-500",
+      bgGlow: "bg-orange-500/10",
+    },
+    {
+      icon: Utensils,
+      title: t.extra.personalMealProgram,
+      description: t.extra.personalMealDesc,
+      gradient: "from-emerald-500 to-teal-500",
+      bgGlow: "bg-emerald-500/10",
+    },
+    {
+      icon: MessageSquare,
+      title: t.extra.aiFitnessAssistant,
+      description: t.extra.aiFitnessAssistantDesc,
+      gradient: "from-violet-500 to-purple-500",
+      bgGlow: "bg-violet-500/10",
+    },
+    {
+      icon: Images,
+      title: t.extra.exerciseLibrary,
+      description: t.extra.exerciseLibraryDesc,
+      gradient: "from-blue-500 to-cyan-500",
+      bgGlow: "bg-blue-500/10",
+    },
+    {
+      icon: Trophy,
+      title: t.extra.challengeSystem,
+      description: t.extra.challengeSystemDesc,
+      gradient: "from-amber-500 to-orange-500",
+      bgGlow: "bg-amber-500/10",
+    },
+    {
+      icon: TrendingUp,
+      title: t.extra.progressTracking,
+      description: t.extra.progressTrackingDesc,
+      gradient: "from-rose-500 to-pink-500",
+      bgGlow: "bg-rose-500/10",
+    },
+  ];
+
+  const stats = [
+    { value: "AI", label: t.extra.aiPrograms },
+    { value: "7/24", label: t.extra.fitnessAssistant },
+    { value: "100+", label: "Egzersiz Hareketi" },
+    { value: "4", label: t.extra.languageSupport },
+  ];
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -89,7 +85,7 @@ export default function LandingPage() {
             <div className="flex items-center gap-4">
               <Image
                 src="/logo.png"
-                alt="BodyPilot"
+                alt={t.home.title}
                 width={80}
                 height={80}
                 className="rounded-2xl shadow-lg"
@@ -101,7 +97,7 @@ export default function LandingPage() {
                   letterSpacing: "0.1em",
                 }}
               >
-                BODYPILOT
+                {t.home.title.toUpperCase()}
               </span>
             </div>
           </div>
@@ -116,7 +112,7 @@ export default function LandingPage() {
 
           {/* Heading */}
           <h1 className="text-center text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground max-w-3xl mx-auto leading-tight">
-            BodyPilot ile hedefine{" "}
+            {t.home.title} ile hedefine{" "}
             <span className="bg-gradient-to-r from-violet-500 to-purple-500 bg-clip-text text-transparent">
               en kısa yoldan
             </span>{" "}
@@ -125,8 +121,7 @@ export default function LandingPage() {
 
           {/* Subtitle */}
           <p className="mt-6 text-center text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Kişiselleştirilmiş antrenman programları, beslenme planları ve akıllı
-            fitness asistanı ile sağlıklı yaşam yolculuğuna başla.
+            {t.home.description}
           </p>
 
           {/* CTA Buttons */}
@@ -237,7 +232,7 @@ export default function LandingPage() {
               href="/kayit"
               className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5"
             >
-              Ücretsiz Hesap Oluştur
+              {t.extra.createFreeAccount}
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
@@ -250,7 +245,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Image
               src="/logo.png"
-              alt="BodyPilot"
+              alt={t.home.title}
               width={24}
               height={24}
               className="rounded-md"
@@ -262,7 +257,7 @@ export default function LandingPage() {
                 letterSpacing: "0.08em",
               }}
             >
-              BODYPILOT
+              {t.home.title.toUpperCase()}
             </span>
           </div>
           <p className="text-xs text-muted-foreground">

@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation"
 import { XCircle, ArrowLeft, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/context/LanguageContext"
 
 export default function OdemeIptalPage() {
   const router = useRouter()
+  const { t } = useLanguage()
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -18,7 +20,7 @@ export default function OdemeIptalPage() {
 
         {/* Title */}
         <h1 className="text-3xl font-bold text-foreground">
-          Ödeme İptal Edildi
+          {t.extra.paymentCancelled}
         </h1>
 
         {/* Description */}

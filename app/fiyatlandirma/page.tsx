@@ -111,7 +111,7 @@ export default function FiyatlandirmaPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || "Ödeme başlatılamadı")
+        throw new Error(data.error || t.extra.paymentError)
       }
 
       if (data.url) {
@@ -119,7 +119,7 @@ export default function FiyatlandirmaPage() {
       }
     } catch (error) {
       console.error("Checkout error:", error)
-      alert(error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.")
+      alert(error instanceof Error ? error.message : t.extra.genericError)
     } finally {
       setIsLoading(false)
     }
@@ -127,10 +127,10 @@ export default function FiyatlandirmaPage() {
 
   function getButtonLabel(tier: typeof pricingTiers[0]) {
     if (user && isPro && tier.planType === "pro") {
-      return "Mevcut Planınız"
+      return t.extra.currentPlan
     }
     if (user && !isPro && tier.planType === "free") {
-      return "Mevcut Planınız"
+      return t.extra.currentPlan
     }
     return tier.highlight ? t.pricing.startNow : t.pricing.tryFree
   }

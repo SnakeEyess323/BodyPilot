@@ -42,79 +42,17 @@ function LoadingFallback() {
   );
 }
 
-// Page translations
-const pageTexts = {
-  tr: {
-    title: "Egzersiz Galerisi",
-    subtitle: "Görselli Hareketler",
-    description: "Seçtiğiniz kas grupları için egzersizleri görsellerle keşfedin.",
-    searchPlaceholder: "Egzersiz ara...",
-    allMuscles: "Tüm Kaslar",
-    allLevels: "Tüm Seviyeler",
-    allEquipment: "Tüm Ekipman",
-    filters: "Filtreler",
-    clearFilters: "Temizle",
-    noResults: "Sonuç bulunamadı",
-    noResultsDesc: "Filtreleri değiştirmeyi deneyin.",
-    exercises: "egzersiz",
-    backToSelector: "Kas Seçiciye Dön",
-    selectedMuscles: "Seçilen Kaslar",
-  },
-  en: {
-    title: "Exercise Gallery",
-    subtitle: "Visual Movements",
-    description: "Discover exercises for your selected muscle groups with visuals.",
-    searchPlaceholder: "Search exercises...",
-    allMuscles: "All Muscles",
-    allLevels: "All Levels",
-    allEquipment: "All Equipment",
-    filters: "Filters",
-    clearFilters: "Clear",
-    noResults: "No results found",
-    noResultsDesc: "Try changing your filters.",
-    exercises: "exercises",
-    backToSelector: "Back to Muscle Selector",
-    selectedMuscles: "Selected Muscles",
-  },
-  de: {
-    title: "Übungsgalerie",
-    subtitle: "Visuelle Bewegungen",
-    description: "Entdecken Sie Übungen für Ihre ausgewählten Muskelgruppen mit Bildern.",
-    searchPlaceholder: "Übungen suchen...",
-    allMuscles: "Alle Muskeln",
-    allLevels: "Alle Level",
-    allEquipment: "Alle Ausrüstung",
-    filters: "Filter",
-    clearFilters: "Löschen",
-    noResults: "Keine Ergebnisse gefunden",
-    noResultsDesc: "Versuchen Sie, Ihre Filter zu ändern.",
-    exercises: "Übungen",
-    backToSelector: "Zurück zur Muskelauswahl",
-    selectedMuscles: "Ausgewählte Muskeln",
-  },
-  ru: {
-    title: "Галерея упражнений",
-    subtitle: "Визуальные движения",
-    description: "Откройте для себя упражнения для выбранных групп мышц с изображениями.",
-    searchPlaceholder: "Поиск упражнений...",
-    allMuscles: "Все мышцы",
-    allLevels: "Все уровни",
-    allEquipment: "Всё оборудование",
-    filters: "Фильтры",
-    clearFilters: "Очистить",
-    noResults: "Результаты не найдены",
-    noResultsDesc: "Попробуйте изменить фильтры.",
-    exercises: "упражнений",
-    backToSelector: "Назад к выбору мышц",
-    selectedMuscles: "Выбранные мышцы",
-  },
-};
-
 // Main content component that uses useSearchParams
 function EgzersizlerContent() {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const searchParams = useSearchParams();
-  const pt = pageTexts[language];
+  
+  // Fallback translations for keys not in t.extra
+  const fallbackTexts = {
+    searchPlaceholder: language === "tr" ? "Egzersiz ara..." : language === "en" ? "Search exercises..." : language === "de" ? "Übungen suchen..." : "Поиск упражнений...",
+    clearFilters: language === "tr" ? "Temizle" : language === "en" ? "Clear" : language === "de" ? "Löschen" : "Очистить",
+    exercises: language === "tr" ? "egzersiz" : language === "en" ? "exercises" : language === "de" ? "Übungen" : "упражнений",
+  };
 
   // Get muscles from URL params
   const musclesParam = searchParams.get("muscles");
@@ -211,29 +149,29 @@ function EgzersizlerContent() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            {pt.backToSelector}
+            {t.extra.backToMuscleSelector}
           </Link>
 
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-5 border border-primary/20">
             <Sparkles className="w-4 h-4" />
-            {pt.subtitle}
+            {t.extra.visualExercises}
           </div>
           
           {/* Title */}
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 tracking-tight">
-            {pt.title}
+            {t.extra.exerciseGallery}
           </h1>
           
           {/* Description */}
           <p className="text-muted-foreground max-w-2xl text-base sm:text-lg leading-relaxed">
-            {pt.description}
+            {t.extra.exerciseGalleryDesc}
           </p>
 
           {/* Selected muscles tags */}
           {selectedMuscles.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">{pt.selectedMuscles}:</span>
+              <span className="text-sm text-muted-foreground">{t.extra.selectedMuscles}:</span>
               {selectedMuscles.map((muscleId) => {
                 const muscle = muscleGroups.find((m) => m.id === muscleId);
                 return muscle ? (
@@ -270,7 +208,7 @@ function EgzersizlerContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={pt.searchPlaceholder}
+                placeholder={fallbackTexts.searchPlaceholder}
                 className="w-full rounded-xl border border-input bg-background pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
@@ -283,7 +221,7 @@ function EgzersizlerContent() {
                 onChange={(e) => setSelectedDifficulty(e.target.value as Difficulty | "all")}
                 className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                <option value="all">{pt.allLevels}</option>
+                <option value="all">{t.extra.allLevels}</option>
                 {(["beginner", "intermediate", "advanced"] as Difficulty[]).map((diff) => (
                   <option key={diff} value={diff}>
                     {difficultyLabels[diff][language]}
@@ -297,7 +235,7 @@ function EgzersizlerContent() {
                 onChange={(e) => setSelectedEquipment(e.target.value as Equipment | "all")}
                 className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                <option value="all">{pt.allEquipment}</option>
+                <option value="all">{t.extra.allEquipment}</option>
                 {availableEquipment.map((eq) => (
                   <option key={eq} value={eq}>
                     {equipmentLabels[eq][language]}
@@ -311,7 +249,7 @@ function EgzersizlerContent() {
                   onClick={clearFilters}
                   className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 >
-                  {pt.clearFilters}
+                  {fallbackTexts.clearFilters}
                 </button>
               )}
 
@@ -341,7 +279,7 @@ function EgzersizlerContent() {
 
           {/* Results count */}
           <div className="mt-4 text-sm text-muted-foreground">
-            {filteredExercises.length} {pt.exercises}
+            {filteredExercises.length} {fallbackTexts.exercises}
           </div>
         </motion.div>
 
@@ -369,7 +307,7 @@ function EgzersizlerContent() {
                         {muscle.name[language]}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        {muscleExercises.length} {pt.exercises}
+                        {muscleExercises.length} {fallbackTexts.exercises}
                       </p>
                     </div>
                   </div>
@@ -411,16 +349,16 @@ function EgzersizlerContent() {
               <Search className="h-10 w-10 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">
-              {pt.noResults}
+              {t.extra.noResults}
             </h3>
             <p className="text-muted-foreground mb-6">
-              {pt.noResultsDesc}
+              {t.extra.tryDifferentFilters}
             </p>
             <button
               onClick={clearFilters}
               className="rounded-xl bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              {pt.clearFilters}
+              {fallbackTexts.clearFilters}
             </button>
           </motion.div>
         )}

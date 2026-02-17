@@ -108,20 +108,20 @@ function isRestDay(content: string): boolean {
 }
 
 // Türkçe gün sırası (dahili anahtar olarak her zaman kullanılır)
+// Note: This will be replaced with t.extra.dayNames in the component
 const TURKISH_DAYS: GunAdi[] = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 
-// Dile göre görüntüleme isimleri (Türkçe key → çevrilmiş isim)
-const DAY_DISPLAY_NAMES: Record<string, Record<GunAdi, string>> = {
-  tr: { Pazartesi: "Pazartesi", Salı: "Salı", Çarşamba: "Çarşamba", Perşembe: "Perşembe", Cuma: "Cuma", Cumartesi: "Cumartesi", Pazar: "Pazar" },
-  en: { Pazartesi: "Monday", Salı: "Tuesday", Çarşamba: "Wednesday", Perşembe: "Thursday", Cuma: "Friday", Cumartesi: "Saturday", Pazar: "Sunday" },
-  de: { Pazartesi: "Montag", Salı: "Dienstag", Çarşamba: "Mittwoch", Perşembe: "Donnerstag", Cuma: "Freitag", Cumartesi: "Samstag", Pazar: "Sonntag" },
-  ru: { Pazartesi: "Понедельник", Salı: "Вторник", Çarşamba: "Среда", Perşembe: "Четверг", Cuma: "Пятница", Cumartesi: "Суббота", Pazar: "Воскресенье" },
-};
-
 // Bugünün gününü Türkçe GunAdi olarak al
-function getTodayGunAdi(): GunAdi {
+// Note: This function will use t.extra.dayNames in the component
+function getTodayGunAdi(dayNames: readonly string[]): GunAdi {
+  // getDay() returns 0=Sunday, 1=Monday, etc.
+  // dayNames is [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+  // We need [Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
+  const reorderedDays = [dayNames[6], ...dayNames.slice(0, 6)];
+  const dayIndex = new Date().getDay();
+  // Map translated name back to Turkish GunAdi
   const turkishDays: GunAdi[] = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
-  return turkishDays[new Date().getDay()];
+  return turkishDays[dayIndex];
 }
 
 // User-scoped localStorage key
@@ -172,13 +172,24 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
     setKaloriler(loadKaloriler(userId));
   }, [userId]);
 
-  const todayGun = useMemo(() => getTodayGunAdi(), []);
-
-  // Gün görüntüleme isimlerini al (dile göre)
-  const dayDisplayNames = useMemo(() => DAY_DISPLAY_NAMES[language] || DAY_DISPLAY_NAMES.tr, [language]);
-
-  // Gün sırası her zaman Türkçe key olarak kalır
+  // Gün sırası her zaman Türkçe key olarak kalır (GunAdi type)
   const gunSirasi = TURKISH_DAYS;
+  
+  // Gün görüntüleme isimlerini al (dile göre) - Türkçe key → çevrilmiş isim
+  const dayDisplayNames = useMemo(() => {
+    const dayNames = t.extra.dayNames;
+    return {
+      Pazartesi: dayNames[0], // Monday
+      Salı: dayNames[1], // Tuesday
+      Çarşamba: dayNames[2], // Wednesday
+      Perşembe: dayNames[3], // Thursday
+      Cuma: dayNames[4], // Friday
+      Cumartesi: dayNames[5], // Saturday
+      Pazar: dayNames[6], // Sunday
+    } as Record<GunAdi, string>;
+  }, [t.extra.dayNames]);
+
+  const todayGun = useMemo(() => getTodayGunAdi(t.extra.dayNames), [t.extra.dayNames]);
 
   // Antrenman günlerini hazırla
   const workoutDays = useMemo((): WorkoutDay[] => {
@@ -305,7 +316,7 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
           <div>
             <h3 className="font-semibold text-foreground">{t.dashboard.weeklyWorkout || "Haftalık Antrenman"}</h3>
             <p className="text-sm text-muted-foreground">
-              {completedCount}/{totalWorkoutDays} {t.dashboard.completed || "tamamlandı"}
+              {completedCount}/{totalWorkoutDays} {t.extra.workoutsCompleted}
             </p>
           </div>
         </div>
@@ -319,7 +330,7 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
           {completedCount === totalWorkoutDays && totalWorkoutDays > 0 && (
             <div className="flex items-center gap-2 rounded-full bg-violet-500/20 px-3 py-1.5 text-violet-600 dark:text-violet-400">
               <Flame className="h-4 w-4" />
-              <span className="text-sm font-medium">{t.dashboard.perfectWeek || "Mükemmel Hafta!"}</span>
+              <span className="text-sm font-medium">{t.extra.perfectWeek}</span>
             </div>
           )}
         </div>
@@ -411,10 +422,10 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
                 {rest ? (
                   <div className="flex flex-col items-center justify-center h-full py-2">
                     <span className="text-2xl mb-1">😴</span>
-                    <span className="text-xs text-muted-foreground">{t.dashboard.restDay || "Dinlenme"}</span>
+                    <span className="text-xs text-muted-foreground">{t.extra.rest}</span>
                     <span className="mt-1 text-[10px] text-muted-foreground/60 flex items-center gap-1">
                       <PlusCircle className="h-3 w-3" />
-                      Egzersiz ekle
+                      {t.common.edit}
                     </span>
                   </div>
                 ) : (
@@ -489,8 +500,8 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
                 </div>
                 <DialogTitle className="text-xl flex items-center gap-2">
                   {DAY_EMOJIS[dayDisplayNames[selectedDay.gun]] || DAY_EMOJIS[selectedDay.gun] || "🏋️"} {dayDisplayNames[selectedDay.gun]} {isRestDay(selectedDay.content)
-                    ? (language === "tr" ? "- Egzersiz Ekle" : "- Add Exercise")
-                    : (t.dashboard.workout || "Antrenmanı")}
+                    ? `- ${t.common.edit}`
+                    : t.dashboard.workout}
                 </DialogTitle>
               </DialogHeader>
 
@@ -500,8 +511,8 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
                   <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                     <Dumbbell className="h-4 w-4 text-sky-500" />
                     {isRestDay(selectedDay.content)
-                      ? (language === "tr" ? "Program dışı egzersiz ekle" : "Add extra exercise")
-                      : (t.dashboard.workoutDetails || "Antrenman Detayları")}
+                      ? t.extra.restDayMessage
+                      : t.dashboard.workoutDetails}
                   </h4>
                   
                   {/* Mevcut egzersizler (dinlenme degilse) */}
@@ -535,14 +546,10 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
                   {isRestDay(selectedDay.content) && (
                     <div className="mb-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 p-3 text-center">
                       <p className="text-sm text-muted-foreground">
-                        {language === "tr"
-                          ? "Bu gün dinlenme günü. Program dışı yaptığın sporu buraya ekleyebilirsin."
-                          : "This is a rest day. You can add any extra exercise you did."}
+                        {t.extra.restDayMessage}
                       </p>
                       <p className="text-xs text-muted-foreground/70 mt-1">
-                        {language === "tr"
-                          ? "Kalori otomatik hesaplanır"
-                          : "Calories are calculated automatically"}
+                        {t.extra.autoCalorie}
                       </p>
                     </div>
                   )}
@@ -560,7 +567,7 @@ export function WorkoutStickyNotes({ program, onComplete: onCompleteProp, classN
                           handleAddLine(selectedDay.gun, newExercise);
                         }
                       }}
-                      placeholder={language === "tr" ? "Örn: Koşu 30 dk, Şınav 3 set..." : "E.g. Running 30 min, Push ups 3 sets..."}
+                      placeholder={t.extra.extraExercisePlaceholder}
                       className="flex-1 rounded-lg border border-sky-200 dark:border-sky-800 bg-white dark:bg-sky-950/80 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/30"
                     />
                     <button

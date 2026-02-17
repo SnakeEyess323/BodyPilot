@@ -120,7 +120,7 @@ export function MealStickyNote({ item, className, onDelete, onAddToCalendar, onS
                 ? "text-red-500 hover:text-red-600"
                 : "text-muted-foreground/40 hover:text-red-400"
             )}
-            aria-label={favori ? "Favorilerden çıkar" : "Favorilere ekle"}
+            aria-label={favori ? t.extra.removeFromFavorites : t.extra.addToFavorites}
           >
             <Heart className={cn("w-3.5 h-3.5", favori && "fill-current")} />
           </button>

@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function GirisPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +35,7 @@ export default function GirisPage() {
     if (error) {
       setError(
         error.message === "Invalid login credentials"
-          ? "E-posta veya şifre hatalı."
+          ? t.extra.wrongCredentials
           : error.message
       );
       setLoading(false);
@@ -84,7 +86,7 @@ export default function GirisPage() {
               BODYPILOT
             </span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Giriş Yap</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t.extra.logIn}</h1>
           <p className="text-muted-foreground mt-2">
             Hesabınıza giriş yapın ve antrenmanlarınıza devam edin
           </p>
@@ -188,7 +190,7 @@ export default function GirisPage() {
             className="w-full h-12 text-base font-medium"
             disabled={loading}
           >
-            {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
+            {loading ? t.extra.loggingIn : t.extra.logIn}
           </Button>
         </form>
 
@@ -199,7 +201,7 @@ export default function GirisPage() {
             href="/kayit"
             className="font-medium text-primary hover:underline"
           >
-            Kayıt Ol
+            {t.extra.signUp}
           </Link>
         </p>
       </div>

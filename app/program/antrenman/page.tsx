@@ -17,19 +17,7 @@ import { Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { UpgradeModal } from "@/components/ui/upgrade-modal";
 
-const HEDEF_LABELS: Record<string, string> = {
-  genel_fitness: "genel fitness",
-  kilo_verme: "kilo verme",
-  kas: "kas kütlesi",
-  dayaniklilik: "dayanıklılık",
-  yag_yakmak: "yağ yakmak",
-  kas_yapmak: "kas yapmak",
-  sikilasmak: "sıkılaşmak",
-  kilo_almak: "kilo almak",
-  postur_duzeltmek: "postür düzeltmek",
-  kondisyon_artirmak: "kondisyon artırmak",
-  genel_saglikli_yasam: "genel sağlıklı yaşam",
-};
+// HEDEF_LABELS is now dynamically generated using translations
 
 export default function AntrenmanPage() {
   const { profil, setProfil, isLoaded } = useProfil();
@@ -58,18 +46,36 @@ export default function AntrenmanPage() {
     [program]
   );
 
+  // Map goal keys to translation labels
+  const getGoalLabel = useCallback((key: string): string => {
+    const goalMap: Record<string, string> = {
+      yag_yakmak: t.profile.goalOptions.fatBurn,
+      kas_yapmak: t.profile.goalOptions.muscle,
+      sikilasmak: t.profile.goalOptions.toneUp,
+      kilo_almak: t.profile.goalOptions.weightGain,
+      postur_duzeltmek: t.profile.goalOptions.posture,
+      kondisyon_artirmak: t.profile.goalOptions.endurance,
+      genel_saglikli_yasam: t.profile.goalOptions.healthyLife,
+      kilo_verme: t.profile.goalOptions.weightLoss,
+      kas: t.profile.goalOptions.muscle,
+      dayaniklilik: t.profile.goalOptions.endurance,
+      genel_fitness: t.profile.goalOptions.fitness,
+    };
+    return goalMap[key] || key;
+  }, [t]);
+
   useEffect(() => {
     if (!isLoaded) return;
     if (profil.hedef && profil.hedef.length > 0) {
-      const hedefListesi = profil.hedef.map((h) => HEDEF_LABELS[h] || h).join(", ");
+      const hedefListesi = profil.hedef.map((h) => getGoalLabel(h)).join(", ");
       setHedef(hedefListesi);
     } else {
-      setHedef("genel fitness");
+      setHedef(t.profile.goalOptions.fitness);
     }
     setSeviye(profil.seviye ?? "orta");
     setGunSayisi(profil.gunSayisi ? parseInt(profil.gunSayisi, 10) || 3 : 3);
     setOrtam(profil.ortam ?? "salon");
-  }, [isLoaded, profil.hedef, profil.seviye, profil.gunSayisi, profil.ortam]);
+  }, [isLoaded, profil.hedef, profil.seviye, profil.gunSayisi, profil.ortam, getGoalLabel, t]);
 
   const handleCopyWeek = useCallback((weekProgram: Record<string, string>) => {
     if (hasWorkoutProgram) {
@@ -109,6 +115,7 @@ export default function AntrenmanPage() {
           ortam,
           profil,
           hedefKaslar: hedefKaslar.length > 0 ? hedefKaslar : undefined,
+          lang: language,
         }),
       });
       const data = await res.json();
@@ -167,10 +174,10 @@ export default function AntrenmanPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
             <h3 className="mb-2 text-lg font-semibold text-foreground">
-              Şu anki programı değiştirelim mi?
+              {t.extra.replaceProgram}
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">
-              Zaten bir haftalık antrenman programınız var. Yeni bir program oluşturursanız mevcut program değiştirilecek.
+              {t.extra.replaceProgramDesc}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -178,7 +185,7 @@ export default function AntrenmanPage() {
                 onClick={() => setShowReplaceConfirm(false)}
                 className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
               >
-                İptal
+                {t.common.cancel}
               </button>
               <button
                 type="button"
@@ -188,7 +195,7 @@ export default function AntrenmanPage() {
                 }}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                Evet, Değiştir
+                {t.extra.yesReplace}
               </button>
             </div>
           </div>
@@ -322,12 +329,12 @@ export default function AntrenmanPage() {
               </div>
               <div className="text-left">
                 <h2 className="text-lg font-semibold text-foreground">
-                  Hedef Kas Grupları
+                  {t.extra.targetMuscleGroups}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   {selectedMuscles.length > 0
-                    ? `${selectedMuscles.length} kas grubu seçildi`
-                    : "Opsiyonel - Belirli kaslara odaklanmak için seçin"}
+                    ? `${selectedMuscles.length} ${t.extra.muscleGroupsSelected}`
+                    : t.extra.muscleGroupsOptional}
                 </p>
               </div>
             </div>
@@ -369,7 +376,7 @@ export default function AntrenmanPage() {
           {loading
             ? t.programs.workout.creating
             : selectedMuscles.length > 0
-              ? `${t.programs.workout.createButton} (${selectedMuscles.length} kas grubu)`
+              ? `${t.programs.workout.createButton} (${selectedMuscles.length} ${t.extra.muscleGroupsSelected})`
               : t.programs.workout.createButton}
         </button>
       </form>

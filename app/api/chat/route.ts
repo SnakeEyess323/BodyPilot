@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
       );
     }
     const body: ChatRequest = JSON.parse(raw);
-    const { messages, profil, userContext } = body;
+    const { messages, profil, userContext, lang } = body;
+    const userLang = lang || "tr";
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
         { error: "En az bir mesaj gerekli." },
@@ -50,8 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Zengin sistem promptu oluştur
-    let systemContent = chatSistemPromptu;
+    let systemContent = chatSistemPromptu(userLang);
 
     // Profil bilgileri
     if (profil) {

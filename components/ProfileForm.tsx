@@ -1,6 +1,7 @@
 "use client";
 
 import type { Profil, HedefProfil } from "@/lib/types";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ProfileFormProps {
   profil: Profil;
@@ -9,6 +10,9 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ profil, onChange, compact }: ProfileFormProps) {
+  const { t } = useLanguage();
+  const p = t.profile;
+
   const update = (key: keyof Profil, value: unknown) => {
     onChange({ ...profil, [key]: value });
   };
@@ -16,20 +20,30 @@ export default function ProfileForm({ profil, onChange, compact }: ProfileFormPr
   const inputClass = "w-full rounded border border-input bg-background px-3 py-2 text-foreground";
   const labelClass = "mb-1 block text-sm font-medium text-foreground";
 
+  const goalOptions: { value: string; label: string }[] = [
+    { value: "yag_yakmak", label: p.goalOptions.fatBurn },
+    { value: "kas_yapmak", label: p.goalOptions.muscle },
+    { value: "sikilasmak", label: p.goalOptions.toneUp },
+    { value: "kilo_almak", label: p.goalOptions.weightGain },
+    { value: "postur_duzeltmek", label: p.goalOptions.posture },
+    { value: "kondisyon_artirmak", label: p.goalOptions.endurance },
+    { value: "genel_saglikli_yasam", label: p.goalOptions.healthyLife },
+  ];
+
   return (
     <div className={`space-y-4 ${compact ? "grid gap-4 sm:grid-cols-2" : ""}`}>
       <div className={compact ? "sm:col-span-2" : ""}>
-        <label className={labelClass}>Ad Soyad</label>
+        <label className={labelClass}>{p.fullName}</label>
         <input
           type="text"
-          placeholder="Adınız ve soyadınız"
+          placeholder={p.fullNamePlaceholder}
           value={profil.adSoyad ?? ""}
           onChange={(e) => update("adSoyad", e.target.value || undefined)}
           className={inputClass}
         />
       </div>
       <div>
-        <label className={labelClass}>Yaş</label>
+        <label className={labelClass}>{p.age}</label>
         <input
           type="number"
           min={10}
@@ -40,19 +54,19 @@ export default function ProfileForm({ profil, onChange, compact }: ProfileFormPr
         />
       </div>
       <div>
-        <label className={labelClass}>Cinsiyet</label>
+        <label className={labelClass}>{p.gender}</label>
         <select
           value={profil.cinsiyet ?? ""}
           onChange={(e) => update("cinsiyet", e.target.value || undefined)}
           className={inputClass}
         >
-          <option value="">Seçin</option>
-          <option value="erkek">Erkek</option>
-          <option value="kadin">Kadın</option>
+          <option value="">{p.select}</option>
+          <option value="erkek">{p.genderOptions.male}</option>
+          <option value="kadin">{p.genderOptions.female}</option>
         </select>
       </div>
       <div>
-        <label className={labelClass}>Kilo (kg)</label>
+        <label className={labelClass}>{p.weight}</label>
         <input
           type="number"
           min={30}
@@ -64,7 +78,7 @@ export default function ProfileForm({ profil, onChange, compact }: ProfileFormPr
         />
       </div>
       <div>
-        <label className={labelClass}>Boy (cm)</label>
+        <label className={labelClass}>{p.height}</label>
         <input
           type="number"
           min={100}
@@ -75,17 +89,9 @@ export default function ProfileForm({ profil, onChange, compact }: ProfileFormPr
         />
       </div>
       <div className={compact ? "sm:col-span-2" : ""}>
-        <label className={labelClass}>Hedefler (birden fazla seçebilirsiniz)</label>
+        <label className={labelClass}>{p.goalsMultiple}</label>
         <div className="flex flex-wrap gap-2 mt-1">
-          {[
-            { value: "yag_yakmak", label: "Yağ yakmak" },
-            { value: "kas_yapmak", label: "Kas yapmak" },
-            { value: "sikilasmak", label: "Sıkılaşmak" },
-            { value: "kilo_almak", label: "Kilo almak" },
-            { value: "postur_duzeltmek", label: "Postür düzeltmek" },
-            { value: "kondisyon_artirmak", label: "Kondisyon artırmak" },
-            { value: "genel_saglikli_yasam", label: "Genel sağlıklı yaşam" },
-          ].map((option) => {
+          {goalOptions.map((option) => {
             const selected = Array.isArray(profil.hedef) && profil.hedef.includes(option.value as HedefProfil);
             return (
               <button
@@ -113,52 +119,52 @@ export default function ProfileForm({ profil, onChange, compact }: ProfileFormPr
         </div>
       </div>
       <div>
-        <label className={labelClass}>Seviye</label>
+        <label className={labelClass}>{p.level}</label>
         <select
           value={profil.seviye ?? ""}
           onChange={(e) => update("seviye", e.target.value || undefined)}
           className={inputClass}
         >
-          <option value="">Seçin</option>
-          <option value="baslangic">Başlangıç</option>
-          <option value="orta">Orta</option>
-          <option value="ileri">İleri</option>
+          <option value="">{p.select}</option>
+          <option value="baslangic">{p.levelOptions.beginner}</option>
+          <option value="orta">{p.levelOptions.intermediate}</option>
+          <option value="ileri">{p.levelOptions.advanced}</option>
         </select>
       </div>
       <div>
-        <label className={labelClass}>Haftalık antrenman günü</label>
+        <label className={labelClass}>{p.weeklyDays}</label>
         <select
           value={profil.gunSayisi ?? ""}
           onChange={(e) => update("gunSayisi", e.target.value || undefined)}
           className={inputClass}
         >
-          <option value="">Seçin</option>
-          <option value="1">1 gün</option>
-          <option value="2">2 gün</option>
-          <option value="3">3 gün</option>
-          <option value="4">4 gün</option>
-          <option value="5">5 gün</option>
-          <option value="6">6 gün</option>
-          <option value="7">Hergün</option>
+          <option value="">{p.select}</option>
+          <option value="1">1 {p.dayCount}</option>
+          <option value="2">2 {p.dayCount}</option>
+          <option value="3">3 {p.dayCount}</option>
+          <option value="4">4 {p.dayCount}</option>
+          <option value="5">5 {p.dayCount}</option>
+          <option value="6">6 {p.dayCount}</option>
+          <option value="7">{p.everyday}</option>
         </select>
       </div>
       <div>
-        <label className={labelClass}>Ortam</label>
+        <label className={labelClass}>{p.environment}</label>
         <select
           value={profil.ortam ?? ""}
           onChange={(e) => update("ortam", e.target.value || undefined)}
           className={inputClass}
         >
-          <option value="">Seçin</option>
-          <option value="ev">Ev</option>
-          <option value="salon">Salon</option>
+          <option value="">{p.select}</option>
+          <option value="ev">{p.environmentOptions.home}</option>
+          <option value="salon">{p.environmentOptions.gym}</option>
         </select>
       </div>
       <div className={compact ? "sm:col-span-2" : ""}>
-        <label className={labelClass}>Beslenme kısıtları / alerjiler</label>
+        <label className={labelClass}>{p.dietaryRestrictions}</label>
         <input
           type="text"
-          placeholder="Örn: vejetaryen, glutensiz, süt alerjisi"
+          placeholder={p.dietaryRestrictionsPlaceholder}
           value={profil.kisitlar ?? ""}
           onChange={(e) => update("kisitlar", e.target.value.trim() || undefined)}
           className={inputClass}

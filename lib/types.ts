@@ -65,7 +65,8 @@ export interface AntrenmanRequest {
   gunSayisi: number;
   ortam: string;
   profil: Profil;
-  hedefKaslar?: string[];  // Seçilen kas grupları
+  hedefKaslar?: string[];
+  lang?: "tr" | "en" | "de" | "ru";
 }
 
 export interface YemekRequest {
@@ -73,6 +74,7 @@ export interface YemekRequest {
   kisitlar: string;
   gunSayisi: number;
   profil: Profil;
+  lang?: "tr" | "en" | "de" | "ru";
 }
 
 export interface ChatMessage {
@@ -84,6 +86,7 @@ export interface ChatRequest {
   messages: ChatMessage[];
   profil?: Profil;
   userContext?: string;
+  lang?: "tr" | "en" | "de" | "ru";
 }
 
 // ============ Gamification Types ============

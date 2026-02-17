@@ -42,9 +42,10 @@ export async function POST(request: NextRequest) {
       );
     }
     const body: YemekRequest = JSON.parse(raw);
-    const { kaloriHedefi, kisitlar, gunSayisi, profil } = body;
-    const userPrompt = `Günlük kalori hedefi: ${kaloriHedefi || "günlük ihtiyaca göre"}. Kısıtlar: ${kisitlar || "yok"}. Her öğünde ${gunSayisi ?? 3} farklı yemek seçeneği olan günlük yemek programı oluştur. SADECE öğün bölümleriyle (KAHVALTI, ÖĞLE YEMEĞİ, AKŞAM YEMEĞİ, ARA ÖĞÜN) yaz, gün başlıkları kullanma.`;
-    const systemPrompt = yemekSistemPromptu(profil);
+    const { kaloriHedefi, kisitlar, gunSayisi, profil, lang } = body;
+    const userLang = lang || "tr";
+    const userPrompt = `Daily calorie target: ${kaloriHedefi || "based on daily needs"}. Restrictions: ${kisitlar || "none"}. Create a daily meal program with ${gunSayisi ?? 3} different options per meal. Use ONLY meal section headers, no day headers.`;
+    const systemPrompt = yemekSistemPromptu(profil, userLang);
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

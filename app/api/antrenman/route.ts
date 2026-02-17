@@ -42,17 +42,18 @@ export async function POST(request: NextRequest) {
       );
     }
     const body: AntrenmanRequest = JSON.parse(raw);
-    const { hedef, seviye, gunSayisi, ortam, profil, hedefKaslar } = body;
+    const { hedef, seviye, gunSayisi, ortam, profil, hedefKaslar, lang } = body;
+    const userLang = lang || "tr";
     
     // Build user prompt with optional muscle targeting
-    let userPrompt = `Hedef: ${hedef || "genel fitness"}. Seviye: ${seviye || "orta"}. Haftalık ${gunSayisi ?? 3} gün. Ortam: ${ortam || "salon"}.`;
+    let userPrompt = `Goal: ${hedef || "general fitness"}. Level: ${seviye || "intermediate"}. ${gunSayisi ?? 3} days/week. Environment: ${ortam || "gym"}.`;
     
     if (hedefKaslar && hedefKaslar.length > 0) {
-      userPrompt += ` ÖNCELİKLİ KAS GRUPLARI: ${hedefKaslar.join(", ")}. Bu kas gruplarına özel egzersizler içeren, bu kasları hedefleyen bir program oluştur.`;
+      userPrompt += ` PRIORITY MUSCLE GROUPS: ${hedefKaslar.join(", ")}. Create a program targeting these muscle groups with specific exercises.`;
     }
     
-    userPrompt += " Buna uygun haftalık antrenman programını oluştur.";
-    const systemPrompt = antrenmanSistemPromptu(profil);
+    userPrompt += " Create a suitable weekly workout program.";
+    const systemPrompt = antrenmanSistemPromptu(profil, userLang);
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

@@ -140,6 +140,8 @@ const ColorOrb: React.FC<OrbProps> = ({
 
 // ============ Helper: Bugünün gün adını al ============
 function getTodayGunAdi(): GunAdi {
+  // getDay() returns 0=Sunday, 1=Monday, ..., 6=Saturday
+  // Turkish day names array (Sunday-first, matching getDay() output)
   const days: GunAdi[] = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
   return days[new Date().getDay()];
 }
@@ -165,9 +167,41 @@ function buildUserContext(opts: {
   totalWorkouts: number;
   totalMealDaysFollowed: number;
   userId: string;
+  t: {
+    assistant: {
+      contextToday: string;
+      contextWeeklyWorkoutProgram: string;
+      contextTodayLabel: string;
+      contextRestDay: string;
+      contextWorkoutCompleted: string;
+      contextWorkoutNotDone: string;
+      contextNoWorkoutProgram: string;
+      contextNoMealProgram: string;
+      contextMealProgram: string;
+      contextTodayMeals: string;
+      contextStats: string;
+      contextStreak: string;
+      contextLongestStreak: string;
+      contextLevel: string;
+      contextTotalWorkouts: string;
+      contextMealDaysFollowed: string;
+      contextCompletedDays: string;
+      contextTotal: string;
+      contextRest: string;
+    };
+    extra: {
+      dayNames: readonly string[];
+    };
+    meals: {
+      breakfast: string;
+      lunch: string;
+      dinner: string;
+      snack: string;
+    };
+  };
 }): string {
   const parts: string[] = [];
-  const bugun = getTodayGunAdi();
+  const bugun = getTodayGunAdi(); // Turkish day name (for key lookups)
   const bugunTarih = new Date().toLocaleDateString("tr-TR", {
     weekday: "long",
     year: "numeric",
@@ -175,18 +209,23 @@ function buildUserContext(opts: {
     day: "numeric",
   });
 
-  parts.push(`📅 Bugün: ${bugunTarih}`);
+  parts.push(`📅 ${opts.t.assistant.contextToday}: ${bugunTarih}`);
 
   // ---- Haftalık Antrenman Programı ----
   const program = opts.haftalikProgram;
   const hasProgramData = Object.values(program).some((v) => v && v.trim() !== "");
   if (hasProgramData) {
-    parts.push("\n🏋️ HAFTALIK ANTRENMAN PROGRAMI:");
-    const gunSirasi: GunAdi[] = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-    for (const gun of gunSirasi) {
-      const icerik = program[gun] || "Dinlenme";
-      const isBugun = gun === bugun;
-      parts.push(`  ${isBugun ? "👉 " : ""}${gun}: ${icerik}${isBugun ? " (BUGÜN)" : ""}`);
+    parts.push(`\n🏋️ ${opts.t.assistant.contextWeeklyWorkoutProgram}`);
+    // Turkish day names (used as keys in program object)
+    const turkishDayNames: GunAdi[] = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+    // Translated day names (for display)
+    const translatedDayNames = opts.t.extra.dayNames;
+    for (let i = 0; i < turkishDayNames.length; i++) {
+      const turkishGun = turkishDayNames[i];
+      const translatedGun = translatedDayNames[i];
+      const icerik = program[turkishGun] || opts.t.assistant.contextRest;
+      const isBugun = turkishGun === bugun;
+      parts.push(`  ${isBugun ? "👉 " : ""}${translatedGun}: ${icerik}${isBugun ? ` ${opts.t.assistant.contextTodayLabel}` : ""}`);
     }
 
     // Tamamlanan antrenmanlar (bu hafta) - user-scoped
@@ -197,7 +236,7 @@ function buildUserContext(opts: {
           const weekKey = getWeekKey();
           const completedDays: string[] = data[weekKey] || [];
           if (completedDays.length > 0) {
-            parts.push(`  ✅ Bu hafta tamamlanan günler: ${completedDays.join(", ")}`);
+            parts.push(`  ✅ ${opts.t.assistant.contextCompletedDays}: ${completedDays.join(", ")}`);
           }
 
           // Bugünün durumu
@@ -205,26 +244,26 @@ function buildUserContext(opts: {
           const bugunIcerik = program[bugun] || "";
           const isDinlenme = !bugunIcerik || bugunIcerik.toLowerCase().includes("dinlen") || bugunIcerik === "-";
           if (isDinlenme) {
-            parts.push("  💤 Bugün dinlenme günü.");
+            parts.push(`  💤 ${opts.t.assistant.contextRestDay}`);
           } else if (bugunTamamlandi) {
-            parts.push("  ✅ Bugünkü antrenman TAMAMLANDI.");
+            parts.push(`  ✅ ${opts.t.assistant.contextWorkoutCompleted}`);
           } else {
-            parts.push("  ⏳ Bugünkü antrenman henüz yapılmadı.");
+            parts.push(`  ⏳ ${opts.t.assistant.contextWorkoutNotDone}`);
           }
         }
       }
     } catch { /* ignore localStorage errors */ }
   } else {
-    parts.push("\n🏋️ Henüz bir antrenman programı oluşturulmamış.");
+    parts.push(`\n🏋️ ${opts.t.assistant.contextNoWorkoutProgram}`);
   }
 
   // ---- Yemek Programı ----
   if (opts.yemekProgrami && opts.yemekProgrami.trim()) {
     // Kısa özet - max 800 karakter
     const yemekOzet = opts.yemekProgrami.trim().slice(0, 800);
-    parts.push(`\n🍽️ YEMEK PROGRAMI (özet):\n${yemekOzet}${opts.yemekProgrami.length > 800 ? "\n..." : ""}`);
+    parts.push(`\n🍽️ ${opts.t.assistant.contextMealProgram}\n${yemekOzet}${opts.yemekProgrami.length > 800 ? "\n..." : ""}`);
   } else {
-    parts.push("\n🍽️ Henüz bir yemek programı oluşturulmamış.");
+    parts.push(`\n🍽️ ${opts.t.assistant.contextNoMealProgram}`);
   }
 
   // ---- Bugün ne yedi (manuel yemek takibi) - user-scoped ----
@@ -236,10 +275,10 @@ function buildUserContext(opts: {
         if (manuelData.tarih === bugunStr && manuelData.ogunler) {
           const ogunler = manuelData.ogunler;
           const ogunNames: Record<string, string> = {
-            kahvalti: "Kahvaltı",
-            ogle: "Öğle",
-            aksam: "Akşam",
-            ara: "Ara Öğün",
+            kahvalti: opts.t.meals.breakfast,
+            ogle: opts.t.meals.lunch,
+            aksam: opts.t.meals.dinner,
+            ara: opts.t.meals.snack,
           };
           const yenilenYemekler: string[] = [];
           let toplamKalori = 0;
@@ -261,11 +300,11 @@ function buildUserContext(opts: {
           }
 
           if (yenilenYemekler.length > 0) {
-            parts.push(`\n🥗 BUGÜN YENİLEN YEMEKLER:`);
+            parts.push(`\n🥗 ${opts.t.assistant.contextTodayMeals}`);
             for (const y of yenilenYemekler) {
               parts.push(`  - ${y}`);
             }
-            parts.push(`  📊 Toplam: ~${toplamKalori} kcal | P: ${toplamProtein}g | K: ${toplamKarb}g | Y: ${toplamYag}g`);
+            parts.push(`  📊 ${opts.t.assistant.contextTotal}: ~${toplamKalori} kcal | P: ${toplamProtein}g | K: ${toplamKarb}g | Y: ${toplamYag}g`);
           }
         }
       }
@@ -273,11 +312,11 @@ function buildUserContext(opts: {
   } catch { /* ignore */ }
 
   // ---- Gamification İstatistikleri ----
-  parts.push(`\n📈 İSTATİSTİKLER:`);
-  parts.push(`  🔥 Seri: ${opts.currentStreak} gün (en uzun: ${opts.longestStreak})`);
-  parts.push(`  ⭐ Seviye: ${opts.level} (${opts.levelTitle}) - ${opts.totalXP} XP`);
-  parts.push(`  💪 Toplam antrenman: ${opts.totalWorkouts}`);
-  parts.push(`  🥗 Yemek planına uyulan gün: ${opts.totalMealDaysFollowed}`);
+  parts.push(`\n📈 ${opts.t.assistant.contextStats}`);
+  parts.push(`  🔥 ${opts.t.assistant.contextStreak}: ${opts.currentStreak} gün (${opts.t.assistant.contextLongestStreak}: ${opts.longestStreak})`);
+  parts.push(`  ⭐ ${opts.t.assistant.contextLevel}: ${opts.level} (${opts.levelTitle}) - ${opts.totalXP} XP`);
+  parts.push(`  💪 ${opts.t.assistant.contextTotalWorkouts}: ${opts.totalWorkouts}`);
+  parts.push(`  🥗 ${opts.t.assistant.contextMealDaysFollowed}: ${opts.totalMealDaysFollowed}`);
 
   return parts.join("\n");
 }
@@ -297,7 +336,7 @@ export default function AsistanPage() {
     totalWorkouts,
     totalMealDaysFollowed,
   } = useGamification();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { remainingAiMessages, isPro, refreshUsage, watchAdAvailable, adBonuses } = useSubscription();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
@@ -322,8 +361,9 @@ export default function AsistanPage() {
       totalWorkouts,
       totalMealDaysFollowed,
       userId,
+      t,
     });
-  }, [program, yemekProgrami, currentStreak, longestStreak, totalXP, level, levelTitle, totalWorkouts, totalMealDaysFollowed, userId]);
+  }, [program, yemekProgrami, currentStreak, longestStreak, totalXP, level, levelTitle, totalWorkouts, totalMealDaysFollowed, userId, t]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -373,7 +413,7 @@ export default function AsistanPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, profil, userContext }),
+        body: JSON.stringify({ messages: newMessages, profil, userContext, lang: language }),
       });
       const data = await res.json();
       if (!res.ok) {

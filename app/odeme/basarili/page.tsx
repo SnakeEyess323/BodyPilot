@@ -20,73 +20,75 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/SubscriptionContext"
-
-const PRO_FEATURES = [
-  {
-    icon: MessageSquare,
-    title: "Sınırsız AI Sohbet",
-    description: "Kişisel fitness asistanınıza istediğiniz kadar soru sorun",
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-  },
-  {
-    icon: Dumbbell,
-    title: "Sınırsız Antrenman Programı",
-    description: "Hedefinize özel AI destekli antrenman programları oluşturun",
-    color: "text-violet-500",
-    bg: "bg-violet-500/10",
-  },
-  {
-    icon: Utensils,
-    title: "Sınırsız Yemek Programı",
-    description: "Kişiselleştirilmiş beslenme planları ile hedeflerinize ulaşın",
-    color: "text-orange-500",
-    bg: "bg-orange-500/10",
-  },
-  {
-    icon: Salad,
-    title: "Gelişmiş Beslenme Takibi",
-    description: "Kalori ve makro besin değerlerini detaylı takip edin",
-    color: "text-green-500",
-    bg: "bg-green-500/10",
-  },
-  {
-    icon: Brain,
-    title: "AI Yemek Analizi",
-    description: "Fotoğraf çekerek yemeklerin besin değerlerini anında öğrenin",
-    color: "text-pink-500",
-    bg: "bg-pink-500/10",
-  },
-  {
-    icon: CalendarDays,
-    title: "Antrenman Takvimi",
-    description: "Antrenmanlarınızı takvim üzerinde planlayın ve takip edin",
-    color: "text-cyan-500",
-    bg: "bg-cyan-500/10",
-  },
-  {
-    icon: TrendingUp,
-    title: "İlerleme Takibi",
-    description: "Gelişiminizi grafikler ve istatistiklerle görün",
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-  },
-  {
-    icon: BarChart3,
-    title: "Detaylı İstatistikler",
-    description: "Haftalık ve aylık performans raporlarınıza erişin",
-    color: "text-amber-500",
-    bg: "bg-amber-500/10",
-  },
-]
+import { useLanguage } from "@/context/LanguageContext"
 
 function OdemeBasariliContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const checkoutId = searchParams.get("checkout_id")
   const { refreshUsage } = useSubscription()
+  const { t } = useLanguage()
   const [isVerifying, setIsVerifying] = useState(true)
   const [showFeatures, setShowFeatures] = useState(false)
+
+  const PRO_FEATURES = [
+    {
+      icon: MessageSquare,
+      title: t.extra.unlimitedAiChat,
+      description: t.extra.unlimitedAiChatDesc,
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+    },
+    {
+      icon: Dumbbell,
+      title: t.extra.unlimitedWorkoutProgram,
+      description: t.extra.unlimitedWorkoutProgramDesc,
+      color: "text-violet-500",
+      bg: "bg-violet-500/10",
+    },
+    {
+      icon: Utensils,
+      title: t.extra.unlimitedMealProgram,
+      description: t.extra.unlimitedMealProgramDesc,
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+    },
+    {
+      icon: Salad,
+      title: t.extra.advancedNutrition,
+      description: t.extra.advancedNutritionDesc,
+      color: "text-green-500",
+      bg: "bg-green-500/10",
+    },
+    {
+      icon: Brain,
+      title: t.extra.aiMealAnalysis,
+      description: t.extra.aiMealAnalysisDesc,
+      color: "text-pink-500",
+      bg: "bg-pink-500/10",
+    },
+    {
+      icon: CalendarDays,
+      title: t.extra.workoutCalendar,
+      description: t.extra.workoutCalendarDesc,
+      color: "text-cyan-500",
+      bg: "bg-cyan-500/10",
+    },
+    {
+      icon: TrendingUp,
+      title: t.extra.progressTrackingFeature,
+      description: t.extra.progressTrackingFeatureDesc,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
+    {
+      icon: BarChart3,
+      title: t.extra.detailedStats,
+      description: t.extra.detailedStatsDesc,
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+    },
+  ]
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -118,10 +120,10 @@ function OdemeBasariliContent() {
               </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Ödemeniz İşleniyor...
+              {t.extra.paymentProcessing}
             </h1>
             <p className="text-muted-foreground text-lg max-w-md">
-              Lütfen bekleyin, aboneliğiniz aktifleştiriliyor.
+              {t.extra.paymentProcessingDesc}
             </p>
           </div>
         ) : (
@@ -139,10 +141,10 @@ function OdemeBasariliContent() {
               {/* Thank you message */}
               <div className="space-y-3">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                  Teşekkürler!
+                  {t.extra.thankYou}
                 </h1>
                 <p className="text-xl sm:text-2xl font-semibold text-foreground/80">
-                  Ödemeniz başarıyla alındı
+                  {t.extra.paymentSuccess}
                 </p>
               </div>
 
@@ -151,12 +153,11 @@ function OdemeBasariliContent() {
                 <div className="flex items-center justify-center gap-3 mb-3">
                   <Crown className="h-7 w-7 text-violet-600 dark:text-violet-400" />
                   <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
-                    BodyPilot Pro&apos;ya Hoş Geldiniz!
+                    {t.extra.welcomePro}
                   </span>
                 </div>
                 <p className="text-muted-foreground">
-                  Artık tüm Pro özelliklere sınırsız erişiminiz var. 
-                  Hedeflerinize en kısa yoldan ulaşmak için her şey hazır!
+                  {t.extra.welcomeProDesc} {t.extra.welcomeProDesc2}
                 </p>
               </div>
             </div>
@@ -166,7 +167,7 @@ function OdemeBasariliContent() {
               <div className="flex items-center justify-center gap-2">
                 <Sparkles className="h-5 w-5 text-violet-500" />
                 <h2 className="text-lg sm:text-xl font-semibold text-foreground text-center">
-                  Artık Kullanabileceğiniz Özellikler
+                  {t.extra.unlockedFeatures}
                 </h2>
                 <Sparkles className="h-5 w-5 text-violet-500" />
               </div>
@@ -210,7 +211,7 @@ function OdemeBasariliContent() {
                   "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300"
                 )}
               >
-                Dashboard&apos;a Git
+                {t.extra.goToDashboard}
                 <ArrowRight className="h-5 w-5" />
               </Button>
               <div className="grid grid-cols-2 gap-3">
@@ -220,7 +221,7 @@ function OdemeBasariliContent() {
                   className="h-11 gap-2 text-sm"
                 >
                   <Dumbbell className="h-4 w-4" />
-                  Program Oluştur
+                  {t.extra.createProgram}
                 </Button>
                 <Button
                   variant="outline"
@@ -228,7 +229,7 @@ function OdemeBasariliContent() {
                   className="h-11 gap-2 text-sm"
                 >
                   <MessageSquare className="h-4 w-4" />
-                  AI Asistan
+                  {t.extra.aiAssistant}
                 </Button>
               </div>
             </div>

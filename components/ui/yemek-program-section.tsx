@@ -44,23 +44,42 @@ const DEFAULT_SECILI: SeciliYemekler = {
 
 function loadDeletedMeals(userId: string): string[] {
   if (!userId) return [];
-  return getUserStorageJSON<string[]>(DELETED_MEALS_KEY, userId) ?? [];
+  const raw = getUserStorageJSON<{ tarih: string; ids: string[] } | string[]>(DELETED_MEALS_KEY, userId);
+  // Backward compat: old format was just string[]
+  if (Array.isArray(raw)) return [];
+  if (raw && raw.tarih === getTodayKey()) {
+    return raw.ids ?? [];
+  }
+  return [];
 }
 
 function saveDeletedMeals(userId: string, ids: string[]) {
   if (!userId) return;
-  setUserStorageJSON(DELETED_MEALS_KEY, userId, ids);
+  setUserStorageJSON(DELETED_MEALS_KEY, userId, { tarih: getTodayKey(), ids });
+}
+
+function getTodayKey(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function loadSelectedMeals(userId: string): SeciliYemekler {
   if (!userId) return DEFAULT_SECILI;
-  const data = getUserStorageJSON<SeciliYemekler>(SELECTED_MEALS_KEY, userId);
-  return data ? { ...DEFAULT_SECILI, ...data } : DEFAULT_SECILI;
+  const raw = getUserStorageJSON<{ tarih: string; secili: SeciliYemekler } | SeciliYemekler>(SELECTED_MEALS_KEY, userId);
+  if (!raw) return DEFAULT_SECILI;
+  // New format with date check
+  if ("tarih" in raw && "secili" in raw) {
+    if (raw.tarih === getTodayKey()) {
+      return { ...DEFAULT_SECILI, ...raw.secili };
+    }
+    return DEFAULT_SECILI;
+  }
+  // Backward compat: old format without date - treat as expired
+  return DEFAULT_SECILI;
 }
 
 function saveSelectedMeals(userId: string, selected: SeciliYemekler) {
   if (!userId) return;
-  setUserStorageJSON(SELECTED_MEALS_KEY, userId, selected);
+  setUserStorageJSON(SELECTED_MEALS_KEY, userId, { tarih: getTodayKey(), secili: selected });
 }
 
 function parseMakrolar(makrolarStr?: string): { protein: number; karbonhidrat: number; yag: number } {

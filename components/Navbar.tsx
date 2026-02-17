@@ -153,6 +153,15 @@ export default function Navbar() {
                     {t.nav.mealProgram}
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/program/kilo-takip"
+                    className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                    onClick={() => setProgramsOpen(false)}
+                  >
+                    {t.nav.weightTracking}
+                  </Link>
+                </li>
               </ul>
             )}
           </div>
@@ -566,6 +575,12 @@ export default function Navbar() {
                 className={cn("block rounded-lg px-4 py-2.5 text-sm font-medium transition pl-8", pathname === "/program/yemek" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
               >
                 {t.nav.mealProgram}
+              </Link>
+              <Link
+                href="/program/kilo-takip"
+                className={cn("block rounded-lg px-4 py-2.5 text-sm font-medium transition pl-8", pathname === "/program/kilo-takip" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+              >
+                {t.nav.weightTracking}
               </Link>
             </div>
 

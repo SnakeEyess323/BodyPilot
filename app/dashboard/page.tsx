@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useHaftalikProgram } from "@/context/HaftalikProgramContext";
 import { useYemekProgram } from "@/context/YemekProgramContext";
@@ -17,15 +17,25 @@ import {
   getDaysRemaining,
   getProgressPercent,
 } from "@/lib/challenges";
-import { Trophy, Flame, ChevronRight, Zap, Target } from "lucide-react";
+import { Trophy, Flame, ChevronRight, Zap, Target, Dumbbell } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { loadKiloTakip, getToplamHacim, getKisiselRekorlar, formatTarih, type GunlukAntrenman } from "@/lib/kilo-takip";
 
 export default function DashboardPage() {
   const { program, displayProgram, isTranslating } = useHaftalikProgram();
   const { content: yemekContent, displayContent: yemekDisplayContent } = useYemekProgram();
   const { t, language } = useLanguage();
   const { challenges, myParticipations } = useChallenge();
+  const { user } = useAuth();
 
   const [historyRefresh, setHistoryRefresh] = useState(0);
+  const [kiloData, setKiloData] = useState<GunlukAntrenman[]>([]);
+
+  useEffect(() => {
+    if (user?.id) {
+      setKiloData(loadKiloTakip(user.id));
+    }
+  }, [user?.id]);
 
   // Program boş mu kontrol et
   const hasWorkoutProgram = useMemo(
@@ -219,6 +229,66 @@ export default function DashboardPage() {
         )}
       </section>
 
+      {/* Kilo Takip Özet */}
+      <section className="mb-10">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            {t.weightTracking.dashboardTitle}
+          </h2>
+          <Link
+            href="/program/kilo-takip"
+            className="text-sm font-medium text-primary hover:text-primary/80"
+          >
+            {t.weightTracking.viewAll}
+          </Link>
+        </div>
+        {kiloData.length > 0 ? (() => {
+          const lastWorkout = [...kiloData].sort((a, b) => b.tarih.localeCompare(a.tarih))[0];
+          const prs = getKisiselRekorlar(kiloData);
+          const topPR = prs[0];
+          const hacim = getToplamHacim(lastWorkout);
+          return (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Dumbbell className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {t.weightTracking.lastWorkout}: {formatTarih(lastWorkout.tarih, language)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {lastWorkout.hareketler.length} {t.weightTracking.exercises} · {hacim.toLocaleString()} kg {t.weightTracking.totalVolume.toLowerCase()}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {lastWorkout.hareketler.map((h) => (
+                      <span key={h.id} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+                        {h.hareketAdi} ({Math.max(...h.setler.map((s) => s.kilo))}kg)
+                      </span>
+                    ))}
+                  </div>
+                  {topPR && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                      <Trophy className="h-3.5 w-3.5" />
+                      {t.weightTracking.pr}: {topPR.hareketAdi} — {topPR.maxKilo}kg
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })() : (
+          <Link
+            href="/program/kilo-takip"
+            className="block rounded-xl border border-dashed border-border bg-card p-6 text-center hover:border-primary/50 transition"
+          >
+            <Dumbbell className="mx-auto mb-2 h-10 w-10 text-muted-foreground/30" />
+            <p className="text-sm text-muted-foreground">{t.weightTracking.noRecentWorkout}</p>
+            <p className="mt-1 text-xs text-primary font-medium">{t.weightTracking.dashboardDesc}</p>
+          </Link>
+        )}
+      </section>
+
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/program/antrenman"
@@ -240,6 +310,17 @@ export default function DashboardPage() {
           </h2>
           <p className="text-sm text-muted-foreground">
             {t.dashboard.mealProgramDesc}
+          </p>
+        </Link>
+        <Link
+          href="/program/kilo-takip"
+          className="rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/50 hover:shadow-md"
+        >
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
+            {t.weightTracking.dashboardTitle}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t.weightTracking.dashboardDesc}
           </p>
         </Link>
       </div>

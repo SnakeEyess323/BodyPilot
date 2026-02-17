@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { profilTamamlandi } from "@/lib/onboarding";
 import { migrateLocalStorageToSupabase } from "@/lib/supabase/data-service";
 
-const AUTH_PATHS = ["/giris", "/kayit", "/auth/callback"];
+const AUTH_PATHS = ["/giris", "/kayit", "/auth/callback", "/odeme", "/fiyatlandirma"];
 
 export default function OnboardingGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();

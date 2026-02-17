@@ -35,6 +35,21 @@ function emptyProgram(): HaftalikProgram {
   );
 }
 
+// Get the Monday of the current week as YYYY-MM-DD
+function getCurrentWeekKey(): string {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 1=Mon...
+  const diff = day === 0 ? -6 : 1 - day; // adjust to Monday
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  return monday.toISOString().slice(0, 10);
+}
+
+interface StoredProgram {
+  weekKey: string;
+  program: HaftalikProgram;
+}
+
 interface HaftalikProgramContextValue {
   program: HaftalikProgram;
   setProgram: (program: HaftalikProgram) => void;
@@ -66,19 +81,37 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const currentWeek = getCurrentWeekKey();
+
     // Load from user-scoped localStorage (fast)
-    const localData = getUserStorageJSON<HaftalikProgram>(STORAGE_KEY, user.id);
-    if (localData && typeof localData === "object") {
-      setProgramState({ ...emptyProgram(), ...localData });
+    const localRaw = getUserStorageJSON<StoredProgram | HaftalikProgram>(STORAGE_KEY, user.id);
+    if (localRaw && typeof localRaw === "object") {
+      // New format with weekKey
+      if ("weekKey" in localRaw && "program" in localRaw) {
+        if (localRaw.weekKey === currentWeek) {
+          setProgramState({ ...emptyProgram(), ...localRaw.program });
+        }
+        // else: different week → keep empty (reset)
+      } else {
+        // Old format without weekKey → treat as expired
+        // (don't load stale program)
+      }
     }
     setIsLoaded(true);
 
     // Fetch fresh data from Supabase
-    getUserData<HaftalikProgram>(STORAGE_KEY).then((remoteData) => {
+    getUserData<StoredProgram | HaftalikProgram>(STORAGE_KEY).then((remoteData) => {
       if (remoteData && typeof remoteData === "object") {
-        const merged = { ...emptyProgram(), ...remoteData };
-        setProgramState(merged);
-        setUserStorageJSON(STORAGE_KEY, user.id, merged);
+        if ("weekKey" in remoteData && "program" in remoteData) {
+          if (remoteData.weekKey === currentWeek) {
+            const merged = { ...emptyProgram(), ...remoteData.program };
+            setProgramState(merged);
+            setUserStorageJSON(STORAGE_KEY, user.id, { weekKey: currentWeek, program: merged });
+          }
+          // else: different week → don't load
+        } else {
+          // Old format → treat as expired, clear it
+        }
       }
     });
   }, [user]);
@@ -86,8 +119,9 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
   const persist = useCallback(
     (data: HaftalikProgram) => {
       if (user) {
-        setUserStorageJSON(STORAGE_KEY, user.id, data);
-        setUserData(STORAGE_KEY, data).catch(() => {});
+        const stored: StoredProgram = { weekKey: getCurrentWeekKey(), program: data };
+        setUserStorageJSON(STORAGE_KEY, user.id, stored);
+        setUserData(STORAGE_KEY, stored).catch(() => {});
       }
     },
     [user]

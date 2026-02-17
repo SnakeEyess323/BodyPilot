@@ -47,6 +47,7 @@ export default function AntrenmanPage() {
   const [error, setError] = useState("");
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
   const { remainingWeeklyWorkouts, isPro, refreshUsage } = useSubscription();
 
   const hasWorkoutProgram = useMemo(
@@ -67,15 +68,7 @@ export default function AntrenmanPage() {
     setOrtam(profil.ortam ?? "salon");
   }, [isLoaded, profil.hedef, profil.seviye, profil.gunSayisi, profil.ortam]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    // Client-side limit check for free users
-    if (!isPro && remainingWeeklyWorkouts <= 0) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
+  async function createProgram() {
     setError("");
     setLoading(true);
     try {
@@ -120,6 +113,25 @@ export default function AntrenmanPage() {
     }
   }
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    // Client-side limit check for free users
+    if (!isPro && remainingWeeklyWorkouts <= 0) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    // If there's already a workout program, ask for confirmation
+    if (hasWorkoutProgram) {
+      setShowReplaceConfirm(true);
+      return;
+    }
+
+    // No existing program, create directly
+    await createProgram();
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <UpgradeModal
@@ -127,6 +139,39 @@ export default function AntrenmanPage() {
         onClose={() => setShowUpgradeModal(false)}
         reason="create_workout"
       />
+
+      {/* Mevcut programı değiştirme onay modalı */}
+      {showReplaceConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <h3 className="mb-2 text-lg font-semibold text-foreground">
+              Şu anki programı değiştirelim mi?
+            </h3>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Zaten bir haftalık antrenman programınız var. Yeni bir program oluşturursanız mevcut program değiştirilecek.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowReplaceConfirm(false)}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowReplaceConfirm(false);
+                  await createProgram();
+                }}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Evet, Değiştir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <h1 className="mb-6 text-2xl font-bold text-foreground">
         {t.programs.workout.title}

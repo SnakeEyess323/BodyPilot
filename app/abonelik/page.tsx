@@ -229,7 +229,7 @@ export default function AbonelikPage() {
         )}
 
         {/* No subscription info for free users */}
-        {!sub && !isPro && (
+        {!isPro && (
           <div className="text-center py-4">
             <p className="text-sm text-muted-foreground mb-4">{t.profile.noSubscription}</p>
             <button
@@ -244,7 +244,7 @@ export default function AbonelikPage() {
       </div>
 
       {/* Cancel Section */}
-      {isPro && sub && !isCancelScheduled && (
+      {isPro && !isCancelScheduled && (
         <div className="rounded-2xl border border-red-200 dark:border-red-900/50 bg-card p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-foreground mb-2">
             {t.profile.cancelSubscription}

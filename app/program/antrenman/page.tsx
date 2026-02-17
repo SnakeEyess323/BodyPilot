@@ -10,7 +10,7 @@ import ProfileForm from "@/components/ProfileForm";
 import { useLanguage } from "@/context/LanguageContext";
 import { saveCurrentWeekToHistory } from "@/lib/antrenman-gecmis";
 import type { HaftalikProgram } from "@/lib/types";
-import { WorkoutStickyNotes } from "@/components/ui/workout-sticky-notes";
+import { WorkoutStickyNotes, clearCurrentWeekCompleted } from "@/components/ui/workout-sticky-notes";
 import { AntrenmanGecmis } from "@/components/ui/antrenman-gecmis";
 import { DualViewMuscleMap, getMuscleById, type MuscleId } from "@/components/ui/muscle-map";
 import { Target, ChevronDown, ChevronUp } from "lucide-react";
@@ -82,13 +82,15 @@ export default function AntrenmanPage() {
       setPendingCopyProgram(weekProgram);
       setShowCopyConfirm(true);
     } else {
+      if (userId) clearCurrentWeekCompleted(userId);
       setProgram(weekProgram as HaftalikProgram, language as "tr" | "en" | "de" | "ru");
       setHistoryRefresh((c) => c + 1);
     }
-  }, [hasWorkoutProgram, setProgram, language]);
+  }, [hasWorkoutProgram, setProgram, language, userId]);
 
   function applyCopyWeek() {
     if (pendingCopyProgram) {
+      if (userId) clearCurrentWeekCompleted(userId);
       setProgram(pendingCopyProgram as HaftalikProgram, language as "tr" | "en" | "de" | "ru");
       setHistoryRefresh((c) => c + 1);
     }
@@ -130,6 +132,8 @@ export default function AntrenmanPage() {
       const text = data.content || "";
       const { program: parsed, kaloriler } = parseProgramToDays(text);
       const srcLang = language as "tr" | "en" | "de" | "ru";
+      // Clear completed days from old program before setting new one
+      if (userId) clearCurrentWeekCompleted(userId);
       setProgram(parsed, srcLang);
       if (userId) {
         saveKaloriler(userId, kaloriler);

@@ -142,6 +142,15 @@ function getWeekKey(): string {
   return `${now.getFullYear()}-W${weekNumber}`;
 }
 
+/** Clear completed workouts for the current week (called when a new program is created) */
+export function clearCurrentWeekCompleted(userId: string): void {
+  if (!userId) return;
+  const stored = loadCompletedWorkouts(userId);
+  const weekKey = getWeekKey();
+  delete stored[weekKey];
+  saveCompletedWorkouts(userId, stored);
+}
+
 export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp, isTranslating: isTranslatingProp, onComplete: onCompleteProp, className }: WorkoutStickyNotesProps) {
   // Use displayProgram for visual display, program for editing/data operations
   const shownProgram = displayProgramProp || program;

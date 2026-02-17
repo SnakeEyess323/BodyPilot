@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useProfil } from "@/context/ProfilContext";
 import { useHaftalikProgram } from "@/context/HaftalikProgramContext";
@@ -9,6 +9,7 @@ import { parseProgramToDays, saveKaloriler } from "@/lib/parseProgram";
 import ProfileForm from "@/components/ProfileForm";
 import { useLanguage } from "@/context/LanguageContext";
 import { saveCurrentWeekToHistory } from "@/lib/antrenman-gecmis";
+import type { HaftalikProgram } from "@/lib/types";
 import { WorkoutStickyNotes } from "@/components/ui/workout-sticky-notes";
 import { AntrenmanGecmis } from "@/components/ui/antrenman-gecmis";
 import { DualViewMuscleMap, getMuscleById, type MuscleId } from "@/components/ui/muscle-map";
@@ -48,6 +49,8 @@ export default function AntrenmanPage() {
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
+  const [showCopyConfirm, setShowCopyConfirm] = useState(false);
+  const [pendingCopyProgram, setPendingCopyProgram] = useState<Record<string, string> | null>(null);
   const { remainingWeeklyWorkouts, isPro, refreshUsage } = useSubscription();
 
   const hasWorkoutProgram = useMemo(
@@ -67,6 +70,25 @@ export default function AntrenmanPage() {
     setGunSayisi(profil.gunSayisi ? parseInt(profil.gunSayisi, 10) || 3 : 3);
     setOrtam(profil.ortam ?? "salon");
   }, [isLoaded, profil.hedef, profil.seviye, profil.gunSayisi, profil.ortam]);
+
+  const handleCopyWeek = useCallback((weekProgram: Record<string, string>) => {
+    if (hasWorkoutProgram) {
+      setPendingCopyProgram(weekProgram);
+      setShowCopyConfirm(true);
+    } else {
+      setProgram(weekProgram as HaftalikProgram);
+      setHistoryRefresh((c) => c + 1);
+    }
+  }, [hasWorkoutProgram, setProgram]);
+
+  function applyCopyWeek() {
+    if (pendingCopyProgram) {
+      setProgram(pendingCopyProgram as HaftalikProgram);
+      setHistoryRefresh((c) => c + 1);
+    }
+    setShowCopyConfirm(false);
+    setPendingCopyProgram(null);
+  }
 
   async function createProgram() {
     setError("");
@@ -173,6 +195,39 @@ export default function AntrenmanPage() {
         </div>
       )}
 
+      {/* Geçmiş haftayı kopyalama onay modalı */}
+      {showCopyConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <h3 className="mb-2 text-lg font-semibold text-foreground">
+              Şu anki programı değiştirelim mi?
+            </h3>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Zaten bir haftalık antrenman programınız var. Geçmiş haftanın programını kopyalarsanız mevcut program değiştirilecek.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCopyConfirm(false);
+                  setPendingCopyProgram(null);
+                }}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                onClick={applyCopyWeek}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Evet, Kopyala
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h1 className="mb-6 text-2xl font-bold text-foreground">
         {t.programs.workout.title}
       </h1>
@@ -184,7 +239,7 @@ export default function AntrenmanPage() {
             program={program}
             onComplete={() => setHistoryRefresh((c) => c + 1)}
           />
-          <AntrenmanGecmis refreshTrigger={historyRefresh} />
+          <AntrenmanGecmis refreshTrigger={historyRefresh} onCopyWeek={handleCopyWeek} />
         </div>
       )}
 

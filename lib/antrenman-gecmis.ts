@@ -115,17 +115,28 @@ function loadCompletedForWeek(userId: string, weekKey: string): GunAdi[] {
 
 /**
  * Mevcut haftanin programini okur.
+ * Supports both old format (plain HaftalikProgram) and new format ({ weekKey, program }).
  */
 function loadCurrentProgram(userId: string): HaftalikProgram | null {
   if (!userId) return null;
-  const parsed = getUserStorageJSON<HaftalikProgram>(PROGRAM_KEY, userId);
+  const parsed = getUserStorageJSON<{ weekKey?: string; program?: HaftalikProgram } & HaftalikProgram>(PROGRAM_KEY, userId);
   if (!parsed || typeof parsed !== "object") return null;
-  // En az bir gun icerik var mi kontrol et
+
+  // New format: { weekKey: string, program: HaftalikProgram }
+  if ("weekKey" in parsed && "program" in parsed && parsed.program) {
+    const prog = parsed.program;
+    const hasContent = Object.values(prog).some(
+      (v) => typeof v === "string" && v.trim() !== ""
+    );
+    return hasContent ? prog : null;
+  }
+
+  // Old format: plain HaftalikProgram
   const hasContent = Object.values(parsed).some(
     (v) => typeof v === "string" && v.trim() !== ""
   );
   if (!hasContent) return null;
-  return parsed;
+  return parsed as HaftalikProgram;
 }
 
 // =============================================================================

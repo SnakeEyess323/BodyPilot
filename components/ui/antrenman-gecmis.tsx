@@ -11,6 +11,7 @@ import {
   Dumbbell,
   Trophy,
   History,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -156,9 +157,10 @@ interface WeekRowProps {
   week: AntrenmanGecmisHafta;
   isCurrentWeek: boolean;
   onCellClick: (week: AntrenmanGecmisHafta, gun: GunAdi) => void;
+  onCopyWeek?: (program: Record<string, string>) => void;
 }
 
-function WeekRow({ week, isCurrentWeek, onCellClick }: WeekRowProps) {
+function WeekRow({ week, isCurrentWeek, onCellClick, onCopyWeek }: WeekRowProps) {
   const label = getWeekLabel(week.weekKey, week.startDate);
   const workoutDays = GUN_SIRASI.filter(
     (g) => !isRestDay(week.program[g] || "")
@@ -197,6 +199,21 @@ function WeekRow({ week, isCurrentWeek, onCellClick }: WeekRowProps) {
           <span className="text-[10px] text-muted-foreground">
             {week.weekKey}
           </span>
+          {!isCurrentWeek && onCopyWeek && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCopyWeek(week.program);
+              }}
+              className="mt-1 inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
+              title="Bu haftanın programını tekrar kullan"
+            >
+              <Copy className="h-3 w-3" />
+              <span className="hidden sm:inline">Aynısını Ekle</span>
+              <span className="sm:hidden">Ekle</span>
+            </button>
+          )}
         </div>
       </td>
 
@@ -258,9 +275,11 @@ interface AntrenmanGecmisProps {
   className?: string;
   /** Disaridan tetiklenecek refresh sayaci */
   refreshTrigger?: number;
+  /** Gecmis bir haftanin programini kopyalamak icin callback */
+  onCopyWeek?: (program: Record<string, string>) => void;
 }
 
-export function AntrenmanGecmis({ className, refreshTrigger }: AntrenmanGecmisProps) {
+export function AntrenmanGecmis({ className, refreshTrigger, onCopyWeek }: AntrenmanGecmisProps) {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const [history, setHistory] = useState<AntrenmanGecmisHafta[]>([]);
@@ -397,6 +416,7 @@ export function AntrenmanGecmis({ className, refreshTrigger }: AntrenmanGecmisPr
                   week={week}
                   isCurrentWeek={week.weekKey === currentWeekKey}
                   onCellClick={handleCellClick}
+                  onCopyWeek={onCopyWeek}
                 />
               ))}
             </tbody>

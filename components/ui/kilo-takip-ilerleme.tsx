@@ -6,10 +6,6 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   type GunlukAntrenman,
-  type KisiselRekor,
-  type KasGrubu,
-  KAS_GRUBU_LABELS,
-  KAS_GRUBU_ICONS,
   getKisiselRekorlar,
   getHareketGecmis,
   getTumHareketAdlari,
@@ -23,7 +19,6 @@ interface KiloTakipIlerlemeProps {
 export function KiloTakipIlerleme({ data }: KiloTakipIlerlemeProps) {
   const { t, language } = useLanguage();
   const wt = t.weightTracking;
-  const kasGrubuLabels = KAS_GRUBU_LABELS[language] || KAS_GRUBU_LABELS.tr;
 
   const [selectedExercise, setSelectedExercise] = useState<string>("");
 
@@ -56,8 +51,6 @@ export function KiloTakipIlerleme({ data }: KiloTakipIlerlemeProps) {
         ) : (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {prs.slice(0, 9).map((pr, idx) => {
-              const icon = KAS_GRUBU_ICONS[pr.kasGrubu as KasGrubu] || "⚡";
-              const label = kasGrubuLabels[pr.kasGrubu as KasGrubu] || pr.kasGrubu;
               return (
                 <div
                   key={idx}
@@ -69,12 +62,8 @@ export function KiloTakipIlerleme({ data }: KiloTakipIlerlemeProps) {
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span>{icon}</span>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground line-clamp-1">{pr.hareketAdi}</p>
-                        <p className="text-[10px] text-muted-foreground">{label}</p>
-                      </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground line-clamp-1">{pr.hareketAdi}</p>
                     </div>
                     {idx === 0 && <span className="text-lg">🥇</span>}
                     {idx === 1 && <span className="text-lg">🥈</span>}

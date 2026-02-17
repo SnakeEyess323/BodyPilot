@@ -6,9 +6,6 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   type GunlukAntrenman,
-  KAS_GRUBU_LABELS,
-  KAS_GRUBU_ICONS,
-  type KasGrubu,
   getToplamHacim,
   formatTarih,
 } from "@/lib/kilo-takip";
@@ -24,8 +21,6 @@ export function KiloTakipGecmis({ data, onEdit, onDelete }: KiloTakipGecmisProps
   const wt = t.weightTracking;
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  const kasGrubuLabels = KAS_GRUBU_LABELS[language] || KAS_GRUBU_LABELS.tr;
 
   const sorted = [...data].sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 15);
 
@@ -88,19 +83,13 @@ export function KiloTakipGecmis({ data, onEdit, onDelete }: KiloTakipGecmisProps
             {isExpanded && (
               <div className="border-t border-border/50 px-3.5 pb-3.5 pt-2">
                 {workout.hareketler.map((hareket) => {
-                  const icon = KAS_GRUBU_ICONS[hareket.kasGrubu as KasGrubu] || "⚡";
-                  const label = kasGrubuLabels[hareket.kasGrubu as KasGrubu] || hareket.kasGrubu;
                   const maxKilo = Math.max(...hareket.setler.map((s) => s.kilo), 0);
 
                   return (
                     <div key={hareket.id} className="mb-3 last:mb-0">
                       <div className="mb-1 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">{icon}</span>
                           <span className="text-sm font-semibold text-foreground">{hareket.hareketAdi}</span>
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                            {label}
-                          </span>
                         </div>
                         <span className="text-xs font-bold text-primary">{maxKilo}kg max</span>
                       </div>

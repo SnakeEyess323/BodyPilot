@@ -1,17 +1,12 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { Plus, Trash2, Save, X, ChevronDown, History } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Trash2, Save, X, History } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   type GunlukAntrenman,
   type HareketKayit,
   type SetKayit,
-  type KasGrubu,
-  KAS_GRUPLARI,
-  KAS_GRUBU_LABELS,
-  KAS_GRUBU_ICONS,
   generateId,
   getSonAntrenmanBilgisi,
 } from "@/lib/kilo-takip";
@@ -47,8 +42,6 @@ export function KiloTakipForm({ allData, editingWorkout, onSave, onCancel }: Kil
   const [hareketler, setHareketler] = useState<HareketKayit[]>(
     editingWorkout?.hareketler.length ? editingWorkout.hareketler : [getDefaultHareket()]
   );
-
-  const kasGrubuLabels = KAS_GRUBU_LABELS[language] || KAS_GRUBU_LABELS.tr;
 
   const exerciseSuggestions = useMemo(() => {
     const langKey = language as "tr" | "en" | "de" | "ru";
@@ -173,21 +166,6 @@ export function KiloTakipForm({ allData, editingWorkout, onSave, onCancel }: Kil
                     </datalist>
                   </div>
 
-                  {/* Kas Grubu */}
-                  <div className="relative">
-                    <select
-                      value={hareket.kasGrubu}
-                      onChange={(e) => updateHareket(hareket.id, { kasGrubu: e.target.value })}
-                      className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
-                      {KAS_GRUPLARI.map((kg) => (
-                        <option key={kg} value={kg}>
-                          {KAS_GRUBU_ICONS[kg]} {kasGrubuLabels[kg]}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  </div>
                 </div>
 
                 {hareketler.length > 1 && (

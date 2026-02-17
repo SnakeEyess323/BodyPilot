@@ -2,6 +2,60 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { polar } from "@/lib/polar/server";
 
+async function findPolarSubscription(userId: string, email: string | undefined, polarCustomerId: string | null) {
+  // Try externalCustomerId first
+  try {
+    const page = await polar.subscriptions.list({
+      externalCustomerId: userId,
+      active: true,
+      limit: 5,
+    });
+    const items = page.result?.items || [];
+    if (items.length > 0) return items[0];
+  } catch {
+    // continue
+  }
+
+  // Try polar_customer_id
+  if (polarCustomerId) {
+    try {
+      const page = await polar.subscriptions.list({
+        customerId: polarCustomerId,
+        active: true,
+        limit: 5,
+      });
+      const items = page.result?.items || [];
+      if (items.length > 0) return items[0];
+    } catch {
+      // continue
+    }
+  }
+
+  // Try by email
+  if (email) {
+    try {
+      const customers = await polar.customers.list({
+        email,
+        limit: 5,
+      });
+      const customerItems = customers.result?.items || [];
+      for (const customer of customerItems) {
+        const page = await polar.subscriptions.list({
+          customerId: customer.id,
+          active: true,
+          limit: 5,
+        });
+        const subItems = page.result?.items || [];
+        if (subItems.length > 0) return subItems[0];
+      }
+    } catch {
+      // continue
+    }
+  }
+
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const supabase = createClient();
@@ -16,10 +70,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get profile plan
+    // Get profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, polar_customer_id")
       .eq("id", user.id)
       .single();
 
@@ -41,21 +95,18 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // If no local record, try to fetch from Polar API directly
+    // If no local record, try to fetch from Polar API
     try {
-      const polarSubs = await polar.subscriptions.list({
-        externalCustomerId: user.id,
-        active: true,
-        limit: 1,
-      });
-
-      const activeSub = polarSubs.result?.items?.[0];
+      const activeSub = await findPolarSubscription(
+        user.id,
+        user.email || undefined,
+        profile?.polar_customer_id || null
+      );
 
       if (activeSub) {
         const billingCycle =
           activeSub.recurringInterval === "year" ? "yearly" : "monthly";
 
-        // Sync to local DB for future queries
         const subscriptionData = {
           user_id: user.id,
           plan: "pro",
@@ -75,13 +126,25 @@ export async function GET(req: NextRequest) {
           updated_at: new Date().toISOString(),
         };
 
+        // Sync to local DB
         await supabase.from("subscriptions").insert(subscriptionData);
 
-        // Also ensure profile has the right plan
+        // Ensure profile plan is pro
         if (profile?.plan !== "pro") {
           await supabase
             .from("profiles")
             .update({ plan: "pro", updated_at: new Date().toISOString() })
+            .eq("id", user.id);
+        }
+
+        // Save polar_customer_id if not set
+        if (!profile?.polar_customer_id && activeSub.customerId) {
+          await supabase
+            .from("profiles")
+            .update({
+              polar_customer_id: activeSub.customerId,
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", user.id);
         }
 

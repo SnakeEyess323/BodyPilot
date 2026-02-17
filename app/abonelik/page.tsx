@@ -18,6 +18,7 @@ import {
   Dumbbell,
   UtensilsCrossed,
   Shield,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ export default function AbonelikPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelResult, setCancelResult] = useState<"success" | "error" | null>(null);
+  const [cancelErrorMsg, setCancelErrorMsg] = useState<string>("");
 
   const fetchDetails = useCallback(async () => {
     try {
@@ -67,6 +69,7 @@ export default function AbonelikPage() {
   async function handleCancel() {
     setCancelling(true);
     setCancelResult(null);
+    setCancelErrorMsg("");
     try {
       const res = await fetch("/api/polar/cancel", { method: "POST" });
       if (res.ok) {
@@ -76,9 +79,14 @@ export default function AbonelikPage() {
         await refreshUsage();
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
+        const data = await res.json().catch(() => ({}));
+        const msg = data.error || `HTTP ${res.status}`;
+        const debug = data.debug ? ` [${data.debug.join(", ")}]` : "";
+        setCancelErrorMsg(`${msg}${debug}`);
         setCancelResult("error");
       }
-    } catch {
+    } catch (e: unknown) {
+      setCancelErrorMsg(e instanceof Error ? e.message : "Network error");
       setCancelResult("error");
     } finally {
       setCancelling(false);
@@ -153,9 +161,16 @@ export default function AbonelikPage() {
         </div>
       )}
       {cancelResult === "error" && (
-        <div className="mb-6 flex items-center gap-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
-          <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
-          <p className="text-sm text-red-700 dark:text-red-400">{t.profile.cancelError}</p>
+        <div className="mb-6 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+            <p className="text-sm text-red-700 dark:text-red-400">{t.profile.cancelError}</p>
+          </div>
+          {cancelErrorMsg && (
+            <p className="mt-2 text-xs text-red-500 dark:text-red-500 font-mono break-all">
+              {cancelErrorMsg}
+            </p>
+          )}
         </div>
       )}
 
@@ -212,6 +227,18 @@ export default function AbonelikPage() {
                 )}
               </span>
             </div>
+
+            {sub.current_period_start && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <RefreshCw className="h-4 w-4" />
+                  {t.profile.renewalDate}
+                </div>
+                <span className="text-sm font-medium text-foreground">
+                  {formatDate(sub.current_period_start)}
+                </span>
+              </div>
+            )}
 
             {sub.current_period_end && (
               <div className="flex items-center justify-between">

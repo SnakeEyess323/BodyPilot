@@ -87,14 +87,18 @@ const GamificationContext = createContext<GamificationContextType | undefined>(
   undefined
 );
 
+function toLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function getToday(): string {
-  return new Date().toISOString().split("T")[0];
+  return toLocalDateStr(new Date());
 }
 
 function getYesterday(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
+  return toLocalDateStr(d);
 }
 
 export function GamificationProvider({ children }: { children: ReactNode }) {
@@ -127,12 +131,29 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     }
     setIsLoaded(true);
 
-    // Fetch fresh data from Supabase
+    // Fetch fresh data from Supabase and merge carefully
     getUserData<GamificationData>(STORAGE_KEY).then((remoteData) => {
       if (remoteData && typeof remoteData === "object") {
-        const merged = { ...DEFAULT_DATA, ...remoteData };
-        setData(merged);
-        setUserStorageJSON(STORAGE_KEY, user.id, merged);
+        const remote = { ...DEFAULT_DATA, ...remoteData };
+        setData((prev) => {
+          const today = getToday();
+          // If we already processed today's visit locally, keep our streak
+          // but merge cumulative stats with max() so nothing is lost
+          if (prev.lastVisitDate === today && remote.lastVisitDate !== today) {
+            return {
+              ...prev,
+              totalXP: Math.max(prev.totalXP, remote.totalXP),
+              totalWorkouts: Math.max(prev.totalWorkouts, remote.totalWorkouts),
+              totalMealDaysFollowed: Math.max(prev.totalMealDaysFollowed, remote.totalMealDaysFollowed),
+              longestStreak: Math.max(prev.longestStreak, remote.longestStreak),
+              unlockedBadges: Array.from(new Set([...prev.unlockedBadges, ...remote.unlockedBadges])),
+              challengesCompleted: Math.max(prev.challengesCompleted ?? 0, remote.challengesCompleted ?? 0),
+              challengesWon: Math.max(prev.challengesWon ?? 0, remote.challengesWon ?? 0),
+              referralsCount: Math.max(prev.referralsCount ?? 0, remote.referralsCount ?? 0),
+            };
+          }
+          return remote;
+        });
       }
     });
   }, [user]);
@@ -203,7 +224,8 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
         completedTasks: ["daily_login"], // Auto-complete login task
       };
     });
-  }, [isLoaded, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, user, data.lastVisitDate]);
 
   // Check for badge unlocks whenever data changes
   useEffect(() => {

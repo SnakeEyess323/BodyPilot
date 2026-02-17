@@ -13,14 +13,14 @@ export function StreakWidget() {
   const { currentStreak, longestStreak, visitHistory, isLoaded } = useGamification();
   const { t } = useLanguage();
 
-  // Get last 7 days (including today)
+  // Get last 7 days (including today) using local dates
   const last7Days = useMemo(() => {
     const today = new Date();
     const dates: string[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      dates.push(d.toISOString().split("T")[0]);
+      dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
     }
     return dates;
   }, []);

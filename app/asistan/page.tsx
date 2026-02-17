@@ -324,7 +324,7 @@ function buildUserContext(opts: {
 export default function AsistanPage() {
   const { profil } = useProfil();
   const { displayProgram: program } = useHaftalikProgram();
-  const { content: yemekProgrami } = useYemekProgram();
+  const { displayContent: yemekProgrami } = useYemekProgram();
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const {

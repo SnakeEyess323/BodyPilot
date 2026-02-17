@@ -12,7 +12,7 @@ import { UpgradeModal } from "@/components/ui/upgrade-modal";
 
 export default function YemekPage() {
   const { profil, setProfil, isLoaded } = useProfil();
-  const { content: yemekContent, setContent: setYemekProgram } = useYemekProgram();
+  const { content: yemekContent, displayContent: yemekDisplayContent, setContent: setYemekProgram, setContentWithTranslations } = useYemekProgram();
   const { t, language } = useLanguage();
   const router = useRouter();
   const hasYemekProgram = yemekContent.trim().length > 0;
@@ -63,9 +63,30 @@ export default function YemekPage() {
         throw new Error(data.error || t.programs.meal.error);
       }
       const text = data.content || "";
-      setYemekProgram(text);
+      const srcLang = language as "tr" | "en" | "de" | "ru";
+      setYemekProgram(text, srcLang);
       refreshUsage();
       router.push("/dashboard");
+
+      // Translate to all other languages in background (fire & forget)
+      const otherLangs = (["tr", "en", "de", "ru"] as const).filter((l) => l !== srcLang);
+      fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "meal",
+          sourceLang: srcLang,
+          content: text,
+          targetLangs: otherLangs,
+        }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.translations) {
+            setContentWithTranslations(text, srcLang, d.translations);
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : t.programs.meal.error);
       setLoading(false);
@@ -87,7 +108,7 @@ export default function YemekPage() {
       {/* Mevcut yemek programi */}
       {hasYemekProgram && (
         <div className="mb-10">
-          <YemekStickyNotesSection content={yemekContent} />
+          <YemekStickyNotesSection content={yemekDisplayContent} />
         </div>
       )}
 

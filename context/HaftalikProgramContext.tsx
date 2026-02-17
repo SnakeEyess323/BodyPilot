@@ -5,7 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -19,18 +19,12 @@ import {
 } from "@/lib/user-storage";
 
 const STORAGE_KEY = "spor-asistan-haftalik-program";
-const TRANSLATION_CACHE_KEY = "bodypilot-program-translations";
 
 type Lang = "tr" | "en" | "de" | "ru";
+const ALL_LANGS: Lang[] = ["tr", "en", "de", "ru"];
 
 const GUN_SIRASI: GunAdi[] = [
-  "Pazartesi",
-  "Salı",
-  "Çarşamba",
-  "Perşembe",
-  "Cuma",
-  "Cumartesi",
-  "Pazar",
+  "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar",
 ];
 
 function emptyProgram(): HaftalikProgram {
@@ -53,23 +47,27 @@ interface StoredProgram {
   weekKey: string;
   program: HaftalikProgram;
   sourceLang?: Lang;
-}
-
-interface TranslationCache {
-  weekKey: string;
-  translations: Partial<Record<Lang, HaftalikProgram>>;
+  translations?: Partial<Record<Lang, HaftalikProgram>>;
 }
 
 interface HaftalikProgramContextValue {
-  /** The original program (always in source language, Turkish day keys) */
+  /** The original program (source language) */
   program: HaftalikProgram;
-  /** The display program - translated if available, else original */
+  /** The program in the current display language */
   displayProgram: HaftalikProgram;
-  /** Whether a translation is in progress */
+  /** Whether background translation is in progress */
   isTranslating: boolean;
-  /** The language the program was originally generated in */
+  /** Source language of the program */
   sourceLang: Lang;
+  /** All available translations */
+  translations: Partial<Record<Lang, HaftalikProgram>>;
   setProgram: (program: HaftalikProgram, lang?: Lang) => void;
+  /** Set program with all translations at once (called after batch translate) */
+  setProgramWithTranslations: (
+    program: HaftalikProgram,
+    lang: Lang,
+    translations: Partial<Record<Lang, HaftalikProgram>>
+  ) => void;
   setGun: (gun: GunAdi, content: string) => void;
   swapGun: (gun1: GunAdi, gun2: GunAdi) => void;
   isLoaded: boolean;
@@ -80,7 +78,9 @@ const HaftalikProgramContext = createContext<HaftalikProgramContextValue>({
   displayProgram: emptyProgram(),
   isTranslating: false,
   sourceLang: "tr",
+  translations: {},
   setProgram: () => {},
+  setProgramWithTranslations: () => {},
   setGun: () => {},
   swapGun: () => {},
   isLoaded: false,
@@ -95,30 +95,23 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
   const { language } = useLanguage();
   const [program, setProgramState] = useState<HaftalikProgram>(emptyProgram());
   const [sourceLang, setSourceLang] = useState<Lang>("tr");
-  const [displayProgram, setDisplayProgram] = useState<HaftalikProgram>(emptyProgram());
+  const [translations, setTranslations] = useState<Partial<Record<Lang, HaftalikProgram>>>({});
   const [isTranslating, setIsTranslating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const translationCacheRef = useRef<TranslationCache>({ weekKey: "", translations: {} });
-  const abortRef = useRef<AbortController | null>(null);
 
-  // Load translation cache from storage
-  const loadTranslationCache = useCallback((userId: string, weekKey: string): TranslationCache => {
-    const cached = getUserStorageJSON<TranslationCache>(TRANSLATION_CACHE_KEY, userId);
-    if (cached && cached.weekKey === weekKey) {
-      return cached;
-    }
-    return { weekKey, translations: {} };
-  }, []);
+  // Compute display program based on current language
+  const displayProgram = useMemo(() => {
+    const lang = language as Lang;
+    if (lang === sourceLang) return program;
+    const translated = translations[lang];
+    if (translated && hasContent(translated)) return translated;
+    return program; // fallback to original
+  }, [language, sourceLang, program, translations]);
 
-  // Save translation cache to storage
-  const saveTranslationCache = useCallback((userId: string, cache: TranslationCache) => {
-    setUserStorageJSON(TRANSLATION_CACHE_KEY, userId, cache);
-  }, []);
-
-  // Load program from storage
+  // Load from storage
   useEffect(() => {
     setProgramState(emptyProgram());
-    setDisplayProgram(emptyProgram());
+    setTranslations({});
     setIsLoaded(false);
     setSourceLang("tr");
 
@@ -135,120 +128,42 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
         if (localRaw.weekKey === currentWeek) {
           const prog = { ...emptyProgram(), ...localRaw.program };
           setProgramState(prog);
-          setDisplayProgram(prog);
           if (localRaw.sourceLang) setSourceLang(localRaw.sourceLang);
+          if (localRaw.translations) setTranslations(localRaw.translations);
         }
       }
     }
-
-    // Load translation cache
-    translationCacheRef.current = loadTranslationCache(user.id, currentWeek);
-
     setIsLoaded(true);
 
+    // Fetch fresh from Supabase
     getUserData<StoredProgram | HaftalikProgram>(STORAGE_KEY).then((remoteData) => {
       if (remoteData && typeof remoteData === "object") {
         if ("weekKey" in remoteData && "program" in remoteData) {
           if (remoteData.weekKey === currentWeek) {
             const merged = { ...emptyProgram(), ...remoteData.program };
             setProgramState(merged);
-            setDisplayProgram(merged);
             if (remoteData.sourceLang) setSourceLang(remoteData.sourceLang);
+            if (remoteData.translations) setTranslations(remoteData.translations);
             setUserStorageJSON(STORAGE_KEY, user.id, {
               weekKey: currentWeek,
               program: merged,
               sourceLang: remoteData.sourceLang || "tr",
+              translations: remoteData.translations || {},
             });
           }
         }
       }
     });
-  }, [user, loadTranslationCache]);
-
-  // Translate when language changes
-  useEffect(() => {
-    if (!isLoaded || !user) return;
-    if (!hasContent(program)) {
-      setDisplayProgram(program);
-      return;
-    }
-
-    const currentLang = language as Lang;
-
-    // If current language is the source language, show original
-    if (currentLang === sourceLang) {
-      setDisplayProgram(program);
-      return;
-    }
-
-    // Check cache
-    const cache = translationCacheRef.current;
-    const cached = cache.translations[currentLang];
-    if (cached && hasContent(cached)) {
-      setDisplayProgram(cached);
-      return;
-    }
-
-    // Need to translate - call API
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    setIsTranslating(true);
-
-    fetch("/api/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ program, targetLang: currentLang }),
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Translation failed");
-        return res.json();
-      })
-      .then((data) => {
-        if (controller.signal.aborted) return;
-        const translated = data.translated as HaftalikProgram;
-        if (translated && hasContent(translated)) {
-          setDisplayProgram(translated);
-
-          // Save to cache
-          const weekKey = getCurrentWeekKey();
-          const cache = translationCacheRef.current;
-          cache.weekKey = weekKey;
-          cache.translations[currentLang] = translated;
-          translationCacheRef.current = cache;
-          if (user) {
-            saveTranslationCache(user.id, cache);
-          }
-        }
-      })
-      .catch((err) => {
-        if (err.name === "AbortError") return;
-        console.error("Translation error:", err);
-        // Fallback: show original program
-        setDisplayProgram(program);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setIsTranslating(false);
-        }
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [language, sourceLang, program, isLoaded, user, saveTranslationCache]);
+  }, [user]);
 
   const persist = useCallback(
-    (data: HaftalikProgram, lang?: Lang) => {
+    (data: HaftalikProgram, lang?: Lang, trans?: Partial<Record<Lang, HaftalikProgram>>) => {
       if (user) {
         const stored: StoredProgram = {
           weekKey: getCurrentWeekKey(),
           program: data,
           sourceLang: lang || sourceLang,
+          translations: trans,
         };
         setUserStorageJSON(STORAGE_KEY, user.id, stored);
         setUserData(STORAGE_KEY, stored).catch(() => {});
@@ -260,44 +175,40 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
   const setProgram = useCallback(
     (next: HaftalikProgram, lang?: Lang) => {
       setProgramState(next);
-      setDisplayProgram(next);
-      if (lang) setSourceLang(lang);
-
-      // Clear translation cache when a new program is set
-      if (user) {
-        const weekKey = getCurrentWeekKey();
-        const newCache: TranslationCache = { weekKey, translations: {} };
-        // The new program itself is in the given lang
-        if (lang) {
-          newCache.translations[lang] = next;
-        }
-        translationCacheRef.current = newCache;
-        saveTranslationCache(user.id, newCache);
-      }
-
-      persist(next, lang);
+      const newLang = lang || sourceLang;
+      if (lang) setSourceLang(newLang);
+      // Clear old translations, set source as its own translation
+      const newTrans: Partial<Record<Lang, HaftalikProgram>> = { [newLang]: next };
+      setTranslations(newTrans);
+      persist(next, newLang, newTrans);
     },
-    [persist, user, saveTranslationCache]
+    [persist, sourceLang]
+  );
+
+  const setProgramWithTranslations = useCallback(
+    (next: HaftalikProgram, lang: Lang, trans: Partial<Record<Lang, HaftalikProgram>>) => {
+      setProgramState(next);
+      setSourceLang(lang);
+      // Ensure source lang is in translations
+      const fullTrans = { ...trans, [lang]: next };
+      setTranslations(fullTrans);
+      persist(next, lang, fullTrans);
+    },
+    [persist]
   );
 
   const setGun = useCallback(
     (gun: GunAdi, content: string) => {
       setProgramState((prev) => {
         const next = { ...prev, [gun]: content };
-        setDisplayProgram(next);
-
-        // Invalidate translation cache for this change
-        if (user) {
-          const weekKey = getCurrentWeekKey();
-          translationCacheRef.current = { weekKey, translations: {} };
-          saveTranslationCache(user.id, translationCacheRef.current);
-        }
-
-        persist(next);
+        // Clear translations since content changed
+        const newTrans: Partial<Record<Lang, HaftalikProgram>> = { [sourceLang]: next };
+        setTranslations(newTrans);
+        persist(next, sourceLang, newTrans);
         return next;
       });
     },
-    [persist, user, saveTranslationCache]
+    [persist, sourceLang]
   );
 
   const swapGun = useCallback(
@@ -305,12 +216,21 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
       if (gun1 === gun2) return;
       setProgramState((prev) => {
         const next = { ...prev, [gun1]: prev[gun2], [gun2]: prev[gun1] };
-        setDisplayProgram(next);
-        persist(next);
+        // Swap in all translations too
+        setTranslations((prevTrans) => {
+          const newTrans: Partial<Record<Lang, HaftalikProgram>> = {};
+          for (const [lang, prog] of Object.entries(prevTrans)) {
+            if (prog) {
+              newTrans[lang as Lang] = { ...prog, [gun1]: prog[gun2], [gun2]: prog[gun1] };
+            }
+          }
+          persist(next, sourceLang, newTrans);
+          return newTrans;
+        });
         return next;
       });
     },
-    [persist]
+    [persist, sourceLang]
   );
 
   return (
@@ -320,7 +240,9 @@ export function HaftalikProgramProvider({ children }: { children: ReactNode }) {
         displayProgram,
         isTranslating,
         sourceLang,
+        translations,
         setProgram,
+        setProgramWithTranslations,
         setGun,
         swapGun,
         isLoaded,

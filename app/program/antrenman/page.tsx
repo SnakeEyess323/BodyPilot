@@ -21,7 +21,7 @@ import { UpgradeModal } from "@/components/ui/upgrade-modal";
 
 export default function AntrenmanPage() {
   const { profil, setProfil, isLoaded } = useProfil();
-  const { program, displayProgram, isTranslating, setProgram } = useHaftalikProgram();
+  const { program, displayProgram, isTranslating, setProgram, setProgramWithTranslations } = useHaftalikProgram();
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const { t, language } = useLanguage();
@@ -129,13 +129,34 @@ export default function AntrenmanPage() {
       }
       const text = data.content || "";
       const { program: parsed, kaloriler } = parseProgramToDays(text);
-      setProgram(parsed, language as "tr" | "en" | "de" | "ru");
+      const srcLang = language as "tr" | "en" | "de" | "ru";
+      setProgram(parsed, srcLang);
       if (userId) {
         saveKaloriler(userId, kaloriler);
         saveCurrentWeekToHistory(userId);
       }
       refreshUsage();
       router.push("/dashboard");
+
+      // Translate to all other languages in background (fire & forget)
+      const otherLangs = (["tr", "en", "de", "ru"] as const).filter((l) => l !== srcLang);
+      fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "workout",
+          sourceLang: srcLang,
+          program: parsed,
+          targetLangs: otherLangs,
+        }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.translations) {
+            setProgramWithTranslations(parsed, srcLang, d.translations);
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : t.programs.workout.error);
       setLoading(false);

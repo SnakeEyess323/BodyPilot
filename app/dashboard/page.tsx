@@ -21,7 +21,7 @@ import { Trophy, Flame, ChevronRight, Zap, Target } from "lucide-react";
 
 export default function DashboardPage() {
   const { program, displayProgram, isTranslating } = useHaftalikProgram();
-  const { content: yemekContent } = useYemekProgram();
+  const { content: yemekContent, displayContent: yemekDisplayContent } = useYemekProgram();
   const { t, language } = useLanguage();
   const { challenges, myParticipations } = useChallenge();
 
@@ -215,7 +215,7 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : (
-          <YemekStickyNotesSection content={yemekContent} />
+          <YemekStickyNotesSection content={yemekDisplayContent} />
         )}
       </section>
 

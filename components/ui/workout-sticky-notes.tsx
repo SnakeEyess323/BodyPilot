@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Check, Dumbbell, Flame, ChevronRight, Plus, Trash2, Zap, PlusCircle } from "lucide-react";
+import { Check, Dumbbell, Flame, ChevronRight, Plus, Trash2, Zap, PlusCircle, ArrowLeftRight, GripVertical, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useGamification } from "@/context/GamificationContext";
@@ -151,12 +151,29 @@ export function clearCurrentWeekCompleted(userId: string): void {
   saveCompletedWorkouts(userId, stored);
 }
 
+/** Get the dates (YYYY-MM-DD) for each day of the current week (Mon–Sun) */
+function getWeekDates(): Record<GunAdi, string> {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sun,1=Mon,...
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset);
+
+  const order: GunAdi[] = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+  const result: Record<string, string> = {};
+  order.forEach((gun, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    result[gun] = `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}`;
+  });
+  return result as Record<GunAdi, string>;
+}
+
 export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp, isTranslating: isTranslatingProp, onComplete: onCompleteProp, className }: WorkoutStickyNotesProps) {
-  // Use displayProgram for visual display, program for editing/data operations
   const shownProgram = displayProgramProp || program;
   const { t, language } = useLanguage();
   const { completeWorkout } = useGamification();
-  const { setGun } = useHaftalikProgram();
+  const { setGun, swapGun } = useHaftalikProgram();
   const { profil } = useProfil();
   const { user } = useAuth();
   const userId = user?.id ?? "";
@@ -166,6 +183,13 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
   const [kaloriler, setKaloriler] = useState<KaloriMap>({});
   const [newExercise, setNewExercise] = useState("");
   const newExerciseRef = useRef<HTMLInputElement>(null);
+
+  // Drag-and-drop state
+  const [draggedGun, setDraggedGun] = useState<GunAdi | null>(null);
+  const [dragOverGun, setDragOverGun] = useState<GunAdi | null>(null);
+
+  // Week dates for display
+  const weekDates = useMemo(() => getWeekDates(), []);
 
   // Load completed workouts & kalori from user-scoped storage
   useEffect(() => {
@@ -266,6 +290,63 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
     updateKalori(gun, newContent);
   }, [shownProgram, setGun, updateKalori]);
 
+  // Swap two days (also swaps completed state)
+  const handleSwapDays = useCallback((gun1: GunAdi, gun2: GunAdi) => {
+    if (gun1 === gun2) return;
+    swapGun(gun1, gun2);
+    // Swap completed state
+    if (userId) {
+      const stored = loadCompletedWorkouts(userId);
+      const weekKey = getWeekKey();
+      const weekCompleted = stored[weekKey] || [];
+      const has1 = weekCompleted.includes(gun1);
+      const has2 = weekCompleted.includes(gun2);
+      let next = weekCompleted.filter((g) => g !== gun1 && g !== gun2);
+      if (has1) next.push(gun2);
+      if (has2) next.push(gun1);
+      stored[weekKey] = next;
+      saveCompletedWorkouts(userId, stored);
+      setCompletedDays(next);
+    }
+    // Swap kalori
+    setKaloriler((prev) => {
+      const next = { ...prev };
+      const k1 = prev[gun1];
+      const k2 = prev[gun2];
+      if (k2 !== undefined) next[gun1] = k2; else delete next[gun1];
+      if (k1 !== undefined) next[gun2] = k1; else delete next[gun2];
+      if (userId) saveKaloriler(userId, next);
+      return next;
+    });
+  }, [swapGun, userId]);
+
+  // Drag handlers
+  const handleDragStart = useCallback((gun: GunAdi) => {
+    setDraggedGun(gun);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, gun: GunAdi) => {
+    e.preventDefault();
+    setDragOverGun(gun);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverGun(null);
+  }, []);
+
+  const handleDrop = useCallback((targetGun: GunAdi) => {
+    if (draggedGun && draggedGun !== targetGun) {
+      handleSwapDays(draggedGun, targetGun);
+    }
+    setDraggedGun(null);
+    setDragOverGun(null);
+  }, [draggedGun, handleSwapDays]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedGun(null);
+    setDragOverGun(null);
+  }, []);
+
   // Antrenmanı tamamla
   const handleComplete = useCallback((gun: GunAdi) => {
     if (!userId) return;
@@ -356,6 +437,8 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
           const { gun, content, completed } = day;
           const rest = isRestDay(content);
           const isToday = gun === todayGun;
+          const isDragging = draggedGun === gun;
+          const isDragOver = dragOverGun === gun && draggedGun !== gun;
           
           // Renk seçimi
           let colors = DAY_COLORS.default;
@@ -368,9 +451,8 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
           }
 
           const handleCardClick = (e: React.MouseEvent) => {
-            // Butonlara tıklanınca modal açılmasın
             if ((e.target as HTMLElement).closest("button")) return;
-            // Tum gunler tiklanabilir (dinlenme dahil)
+            if ((e.target as HTMLElement).closest("[data-drag-handle]")) return;
             setSelectedDay(day);
             setIsDetailOpen(true);
           };
@@ -378,6 +460,12 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
           return (
             <div
               key={gun}
+              draggable
+              onDragStart={() => handleDragStart(gun)}
+              onDragOver={(e) => handleDragOver(e, gun)}
+              onDragLeave={handleDragLeave}
+              onDrop={() => handleDrop(gun)}
+              onDragEnd={handleDragEnd}
               onClick={handleCardClick}
               className={cn(
                 "relative rounded-xl border-2 p-3 transition-all duration-200",
@@ -387,7 +475,9 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
                 isToday && "ring-2 ring-cyan-500/30",
                 "transform",
                 !rest && !completed && "hover:border-sky-400",
-                rest && "hover:border-slate-400"
+                rest && "hover:border-slate-400",
+                isDragging && "opacity-40 scale-95",
+                isDragOver && "ring-2 ring-sky-500 border-sky-500 scale-[1.02] shadow-lg"
               )}
             >
               {/* Üst kıvrık köşe efekti */}
@@ -408,17 +498,24 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
                 </div>
               )}
 
-              {/* Gün başlığı */}
+              {/* Gün başlığı + tarih */}
               <div className="mb-2 flex items-center justify-between">
-                <span className={cn(
-                  "text-xs font-semibold",
-                  isToday ? "text-cyan-600 dark:text-cyan-400" : "text-muted-foreground"
-                )}>
-                  {DAY_EMOJIS[dayDisplayNames[gun]] || DAY_EMOJIS[gun] || "🏋️"} {dayDisplayNames[gun]}
-                </span>
-                {isToday && (
+                <div className="flex items-center gap-1">
+                  <GripVertical data-drag-handle className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                  <span className={cn(
+                    "text-xs font-semibold",
+                    isToday ? "text-cyan-600 dark:text-cyan-400" : "text-muted-foreground"
+                  )}>
+                    {DAY_EMOJIS[dayDisplayNames[gun]] || DAY_EMOJIS[gun] || "🏋️"} {dayDisplayNames[gun]}
+                  </span>
+                </div>
+                {isToday ? (
                   <span className="text-[10px] font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
                     {t.calendar?.today || "Bugün"}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground/60">
+                    {weekDates[gun]}
                   </span>
                 )}
               </div>
@@ -495,10 +592,14 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
           {selectedDay && (
             <>
               <DialogHeader>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="w-3 h-3 rounded-full bg-sky-500" />
                   <span className="text-xs text-muted-foreground">
                     {selectedDay.gun === todayGun ? (t.calendar?.today || "Bugün") : dayDisplayNames[selectedDay.gun]}
+                  </span>
+                  <span className="text-xs text-muted-foreground/60 flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {weekDates[selectedDay.gun]}
                   </span>
                   {selectedDay.completed && !isRestDay(selectedDay.content) && (
                     <span className="text-xs bg-violet-500/20 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full">
@@ -520,6 +621,38 @@ export function WorkoutStickyNotes({ program, displayProgram: displayProgramProp
               </DialogHeader>
 
               <div className="space-y-4">
+                {/* Gün değiştirme (swap) */}
+                <div className="flex items-center gap-2">
+                  <ArrowLeftRight className="h-4 w-4 text-sky-500 flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">{t.extra.swapWith}:</span>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const target = e.target.value as GunAdi;
+                      if (target) {
+                        handleSwapDays(selectedDay.gun, target);
+                        // Update selectedDay to reflect the swap
+                        const targetDay = workoutDays.find((d) => d.gun === target);
+                        if (targetDay) {
+                          setSelectedDay({
+                            ...targetDay,
+                            gun: selectedDay.gun,
+                          });
+                        }
+                        setIsDetailOpen(false);
+                      }
+                    }}
+                    className="flex-1 rounded-lg border border-sky-200 dark:border-sky-800 bg-white dark:bg-sky-950/80 px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                  >
+                    <option value="">{t.extra.swapWith}...</option>
+                    {TURKISH_DAYS.filter((g) => g !== selectedDay.gun).map((g) => (
+                      <option key={g} value={g}>
+                        {dayDisplayNames[g]} ({weekDates[g]})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Egzersiz satırları - düzenlenebilir */}
                 <div className="rounded-xl bg-sky-50 dark:bg-sky-950/50 p-4 border border-sky-200 dark:border-sky-800">
                   <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">

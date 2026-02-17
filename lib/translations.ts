@@ -649,6 +649,8 @@ export const translations = {
       translatingProgram: "Program çevriliyor...",
       autoCalorie: "Kalori otomatik hesaplanır",
       extraExercisePlaceholder: "Örn: Koşu 30 dk, Şınav 3 set...",
+      swapWith: "Şununla değiştir",
+      dragToSwap: "Sürükle & bırak ile günleri değiştir",
       
       // Muscle selector
       targetMuscleSelector: "Hedef Kas Seçici",
@@ -1412,6 +1414,8 @@ export const translations = {
       translatingProgram: "Translating program...",
       autoCalorie: "Calories calculated automatically",
       extraExercisePlaceholder: "E.g.: Running 30 min, Push-ups 3 sets...",
+      swapWith: "Swap with",
+      dragToSwap: "Drag & drop to swap days",
       
       // Muscle selector
       targetMuscleSelector: "Target Muscle Selector",
@@ -2175,6 +2179,8 @@ export const translations = {
       translatingProgram: "Programm wird übersetzt...",
       autoCalorie: "Kalorien werden automatisch berechnet",
       extraExercisePlaceholder: "Z.B.: Laufen 30 Min., Liegestütze 3 Sätze...",
+      swapWith: "Tauschen mit",
+      dragToSwap: "Ziehen & ablegen zum Tauschen der Tage",
       
       // Muscle selector
       targetMuscleSelector: "Zielmuskel-Auswahl",
@@ -2919,6 +2925,8 @@ export const translations = {
       translatingProgram: "Программа переводится...",
       autoCalorie: "Калории рассчитываются автоматически",
       extraExercisePlaceholder: "Напр.: Бег 30 мин, Отжимания 3 подхода...",
+      swapWith: "Поменять с",
+      dragToSwap: "Перетащите для обмена днями",
       
       // Muscle selector
       targetMuscleSelector: "Выбор целевых мышц",

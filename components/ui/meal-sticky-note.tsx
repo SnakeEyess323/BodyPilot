@@ -305,7 +305,7 @@ interface MealSectionProps {
   onDelete?: (id: string) => void;
   onAddToCalendar?: (item: YemekItem, gun: GunAdi) => void;
   onSelect?: (item: YemekItem) => void;
-  selectedId?: string | null;
+  selectedIds?: string[];
 }
 
 const OGUN_ICONS: Record<OgunTipi, string> = {
@@ -315,7 +315,7 @@ const OGUN_ICONS: Record<OgunTipi, string> = {
   ara: "🍎",
 };
 
-export function MealSection({ title, items, ogun, onDelete, onAddToCalendar, onSelect, selectedId }: MealSectionProps) {
+export function MealSection({ title, items, ogun, onDelete, onAddToCalendar, onSelect, selectedIds = [] }: MealSectionProps) {
   const { t } = useLanguage();
   const colors = OGUN_COLORS[ogun];
   
@@ -346,7 +346,7 @@ export function MealSection({ title, items, ogun, onDelete, onAddToCalendar, onS
             onDelete={onDelete}
             onAddToCalendar={onAddToCalendar}
             onSelect={onSelect}
-            isSelected={selectedId === item.id}
+            isSelected={selectedIds.includes(item.id)}
           />
         ))}
       </div>

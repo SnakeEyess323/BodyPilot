@@ -157,7 +157,6 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
   const [portionAmount, setPortionAmount] = useState<number>(1);
   const [portionUnit, setPortionUnit] = useState<PorsiyonBirim>("porsiyon");
   const [showAllUnits, setShowAllUnits] = useState(false);
-  const [portionOpen, setPortionOpen] = useState(false);
 
   // Standalone mode state
   const [ogunYemekleri, setOgunYemekleri] = useState<ManuelOgunYemekleri>(DEFAULT_MANUEL_OGUN);
@@ -317,7 +316,7 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
           placeholder={t.dashboard.manualFoodPlaceholder}
           disabled={loading}
           className={cn(
-            "flex-1 rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground",
+            "flex-1 rounded-lg border bg-background px-4 py-2.5 text-base text-foreground placeholder:text-muted-foreground",
             "focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400",
             "disabled:cursor-not-allowed disabled:opacity-50",
             error
@@ -348,101 +347,84 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
         </button>
       </div>
 
-      {/* Porsiyon seçimi - açılır/kapanır */}
-      <div className="mb-4 rounded-lg border border-violet-200/50 bg-violet-50/30 dark:border-violet-900/50 dark:bg-violet-950/10 overflow-hidden">
-        <button
-          onClick={() => setPortionOpen(!portionOpen)}
-          className="w-full flex items-center justify-between px-3 py-2 hover:bg-violet-50/50 dark:hover:bg-violet-950/30 transition-colors"
-        >
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            📏 {t.dashboard.portionLabel}
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-              {portionAmount} {t.dashboard[BIRIM_TRANSLATION_KEYS[portionUnit] as keyof typeof t.dashboard]}
-            </span>
-            {portionOpen ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+      {/* Porsiyon seçimi */}
+      <div className="mb-4 rounded-lg border border-violet-200/50 bg-violet-50/30 p-3 dark:border-violet-900/50 dark:bg-violet-950/10">
+        <p className="mb-2 text-sm font-semibold text-muted-foreground">📏 {t.dashboard.portionLabel}</p>
+        <div className="flex items-center gap-2 mb-2.5">
+          <div className="flex items-center rounded-lg border border-border bg-background">
+            <button
+              onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
+              className="px-3 py-2 text-base font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
+              disabled={portionAmount <= 0.5}
+            >
+              −
+            </button>
+            <input
+              type="number"
+              value={portionAmount}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) setPortionAmount(val);
+              }}
+              className="w-16 border-x border-border bg-transparent px-1 py-2 text-center text-base font-semibold text-foreground focus:outline-none"
+              min="0.5"
+              step="0.5"
+            />
+            <button
+              onClick={() => setPortionAmount(portionAmount + 0.5)}
+              className="px-3 py-2 text-base font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
+            >
+              +
+            </button>
           </div>
-        </button>
-        {portionOpen && (
-          <div className="px-3 pb-3 pt-1 border-t border-violet-200/50 dark:border-violet-900/50">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center rounded-lg border border-border bg-background">
-                <button
-                  onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
-                  className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
-                  disabled={portionAmount <= 0.5}
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  value={portionAmount}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val > 0) setPortionAmount(val);
-                  }}
-                  className="w-14 border-x border-border bg-transparent px-1 py-1.5 text-center text-sm font-semibold text-foreground focus:outline-none"
-                  min="0.5"
-                  step="0.5"
-                />
-                <button
-                  onClick={() => setPortionAmount(portionAmount + 0.5)}
-                  className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
-                >
-                  +
-                </button>
-              </div>
-              <div className="flex gap-1">
-                {[0.5, 1, 1.5, 2, 3].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => setPortionAmount(val)}
-                    className={cn(
-                      "rounded-md px-2 py-1.5 text-xs font-medium transition-all",
-                      portionAmount === val
-                        ? "bg-violet-600 text-white shadow-sm"
-                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    {val}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
-                const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
-                const label = t.dashboard[translationKey] || key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setPortionUnit(key)}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all",
-                      portionUnit === key
-                        ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
-                        : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <span className="text-[11px]">{icon}</span>
-                    {label}
-                  </button>
-                );
-              })}
+          <div className="flex gap-1">
+            {[0.5, 1, 1.5, 2, 3].map((val) => (
               <button
-                onClick={() => setShowAllUnits(!showAllUnits)}
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
-              >
-                {showAllUnits ? (
-                  <><ChevronUp className="h-3 w-3" /> Daha az</>
-                ) : (
-                  <><ChevronDown className="h-3 w-3" /> +{BIRIM_KATEGORILERI.length - 8}</>
+                key={val}
+                onClick={() => setPortionAmount(val)}
+                className={cn(
+                  "rounded-md px-2.5 py-2 text-sm font-medium transition-all",
+                  portionAmount === val
+                    ? "bg-violet-600 text-white shadow-sm"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
+              >
+                {val}
               </button>
-            </div>
+            ))}
           </div>
-        )}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
+            const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
+            const label = t.dashboard[translationKey] || key;
+            return (
+              <button
+                key={key}
+                onClick={() => setPortionUnit(key)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                  portionUnit === key
+                    ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span>{icon}</span>
+                {label}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setShowAllUnits(!showAllUnits)}
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
+          >
+            {showAllUnits ? (
+              <><ChevronUp className="h-3 w-3" /> Daha az</>
+            ) : (
+              <><ChevronDown className="h-3 w-3" /> +{BIRIM_KATEGORILERI.length - 8}</>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Hata mesajı */}

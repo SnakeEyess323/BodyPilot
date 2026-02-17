@@ -70,7 +70,7 @@ export const translations = {
       rawContent: "Yemek programı öğünlere ayrılamadı. Ham içerik:",
       // Manuel yemek takip
       manualFoodTitle: "Ne Yedin?",
-      manualFoodPlaceholder: "Yediğin yemeği yaz... (örn: 1 tabak mercimek çorbası)",
+      manualFoodPlaceholder: "Yediğiniz yemeği yazın... (örn: Mercimek çorbası)",
       manualFoodAdd: "Ekle",
       manualFoodAnalyzing: "Analiz ediliyor...",
       manualFoodEmpty: "Henüz yemek eklemedin. Yediğin bir yemeği yazarak başla!",
@@ -890,7 +890,7 @@ export const translations = {
       rawContent: "Meal program could not be parsed. Raw content:",
       // Manual food tracking
       manualFoodTitle: "What Did You Eat?",
-      manualFoodPlaceholder: "Write what you ate... (e.g. 1 bowl of lentil soup)",
+      manualFoodPlaceholder: "Write what you ate... (e.g. Lentil soup)",
       manualFoodAdd: "Add",
       manualFoodAnalyzing: "Analyzing...",
       manualFoodEmpty: "No food added yet. Start by typing what you ate!",
@@ -1701,7 +1701,7 @@ export const translations = {
       rawContent: "Ernährungsplan konnte nicht analysiert werden. Rohdaten:",
       // Manuelle Essensverfolgung
       manualFoodTitle: "Was hast du gegessen?",
-      manualFoodPlaceholder: "Schreibe, was du gegessen hast... (z.B. 1 Teller Linsensuppe)",
+      manualFoodPlaceholder: "Was hast du gegessen... (z.B. Linsensuppe)",
       manualFoodAdd: "Hinzufügen",
       manualFoodAnalyzing: "Wird analysiert...",
       manualFoodEmpty: "Noch keine Mahlzeit hinzugefügt. Schreibe auf, was du gegessen hast!",
@@ -2512,7 +2512,7 @@ export const translations = {
       rawContent: "План питания не удалось обработать. Исходные данные:",
       // Ручной учёт еды
       manualFoodTitle: "Что ты ел?",
-      manualFoodPlaceholder: "Напиши, что ты ел... (напр. 1 тарелка чечевичного супа)",
+      manualFoodPlaceholder: "Что вы ели... (напр. Чечевичный суп)",
       manualFoodAdd: "Добавить",
       manualFoodAnalyzing: "Анализируется...",
       manualFoodEmpty: "Пока ничего не добавлено. Напиши, что ты ел!",

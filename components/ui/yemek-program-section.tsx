@@ -33,13 +33,13 @@ import type { GunAdi } from "@/lib/types";
 const DELETED_MEALS_KEY = "spor-asistan-silinen-yemekler";
 const SELECTED_MEALS_KEY = "spor-asistan-bugun-yemekler";
 
-type SeciliYemekler = Record<OgunTipi, string | null>;
+type SeciliYemekler = Record<OgunTipi, string[]>;
 
 const DEFAULT_SECILI: SeciliYemekler = {
-  kahvalti: null,
-  ogle: null,
-  aksam: null,
-  ara: null,
+  kahvalti: [],
+  ogle: [],
+  aksam: [],
+  ara: [],
 };
 
 function loadDeletedMeals(userId: string): string[] {
@@ -64,16 +64,26 @@ function getTodayKey(): string {
 
 function loadSelectedMeals(userId: string): SeciliYemekler {
   if (!userId) return DEFAULT_SECILI;
-  const raw = getUserStorageJSON<{ tarih: string; secili: SeciliYemekler } | SeciliYemekler>(SELECTED_MEALS_KEY, userId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = getUserStorageJSON<any>(SELECTED_MEALS_KEY, userId);
   if (!raw) return DEFAULT_SECILI;
-  // New format with date check
   if ("tarih" in raw && "secili" in raw) {
     if (raw.tarih === getTodayKey()) {
-      return { ...DEFAULT_SECILI, ...raw.secili };
+      const s = raw.secili;
+      // Backward compat: old format had string|null, convert to string[]
+      const result: SeciliYemekler = { ...DEFAULT_SECILI };
+      for (const ogun of ["kahvalti", "ogle", "aksam", "ara"] as OgunTipi[]) {
+        const val = s[ogun];
+        if (Array.isArray(val)) {
+          result[ogun] = val;
+        } else if (typeof val === "string") {
+          result[ogun] = [val];
+        }
+      }
+      return result;
     }
     return DEFAULT_SECILI;
   }
-  // Backward compat: old format without date - treat as expired
   return DEFAULT_SECILI;
 }
 
@@ -318,7 +328,7 @@ function BugunYiyeceklerimSection({
   seciliYemekler: SeciliYemekler;
   allYemekler: YemekItem[];
   onClear: () => void;
-  onRemove: (ogun: OgunTipi) => void;
+  onRemove: (ogun: OgunTipi, id: string) => void;
   userId: string;
 }) {
   const { t } = useLanguage();
@@ -333,7 +343,6 @@ function BugunYiyeceklerimSection({
   const [portionAmount, setPortionAmount] = useState<number>(1);
   const [portionUnit, setPortionUnit] = useState<PorsiyonBirim>("porsiyon");
   const [showAllUnits, setShowAllUnits] = useState(false);
-  const [portionOpen, setPortionOpen] = useState(false);
 
   const [manuelOgunYemekleri, setManuelOgunYemekleri] = useState<ManuelOgunYemekleri>(DEFAULT_MANUEL_OGUN);
   const [manuelLoaded, setManuelLoaded] = useState(false);
@@ -413,10 +422,10 @@ function BugunYiyeceklerimSection({
   }, [handleAnalyze]);
 
   const seciliItems = useMemo(() => {
-    const result: Record<OgunTipi, YemekItem | null> = { kahvalti: null, ogle: null, aksam: null, ara: null };
+    const result: Record<OgunTipi, YemekItem[]> = { kahvalti: [], ogle: [], aksam: [], ara: [] };
     for (const ogun of ["kahvalti", "ogle", "aksam", "ara"] as OgunTipi[]) {
-      const id = seciliYemekler[ogun];
-      if (id) result[ogun] = allYemekler.find((y) => y.id === id) || null;
+      const ids = seciliYemekler[ogun];
+      result[ogun] = ids.map((id) => allYemekler.find((y) => y.id === id)).filter(Boolean) as YemekItem[];
     }
     return result;
   }, [seciliYemekler, allYemekler]);
@@ -424,15 +433,16 @@ function BugunYiyeceklerimSection({
   const toplamlar = useMemo(() => {
     let kalori = 0, protein = 0, karbonhidrat = 0, yag = 0;
     for (const ogun of ["kahvalti", "ogle", "aksam", "ara"] as OgunTipi[]) {
-      const item = seciliItems[ogun];
-      if (item?.kalori) { const m = item.kalori.match(/(\d+)/); if (m) kalori += parseInt(m[1], 10); }
-      if (item?.makrolar) { const mk = parseMakrolar(item.makrolar); protein += mk.protein; karbonhidrat += mk.karbonhidrat; yag += mk.yag; }
+      for (const item of seciliItems[ogun]) {
+        if (item.kalori) { const m = item.kalori.match(/(\d+)/); if (m) kalori += parseInt(m[1], 10); }
+        if (item.makrolar) { const mk = parseMakrolar(item.makrolar); protein += mk.protein; karbonhidrat += mk.karbonhidrat; yag += mk.yag; }
+      }
       for (const my of manuelOgunYemekleri[ogun]) { kalori += my.kalori; protein += my.protein; karbonhidrat += my.karbonhidrat; yag += my.yag; }
     }
     return { kalori, protein, karbonhidrat, yag };
   }, [seciliItems, manuelOgunYemekleri]);
 
-  const hasAnySelection = Object.values(seciliYemekler).some((v) => v !== null);
+  const hasAnySelection = Object.values(seciliYemekler).some((arr) => arr.length > 0);
   const hasAnyManuel = Object.values(manuelOgunYemekleri).some((arr) => arr.length > 0);
   const hasAnything = hasAnySelection || hasAnyManuel;
 
@@ -444,8 +454,7 @@ function BugunYiyeceklerimSection({
       kahvalti: [], ogle: [], aksam: [], ara: [],
     };
     for (const ogun of ["kahvalti", "ogle", "aksam", "ara"] as OgunTipi[]) {
-      const aiItem = seciliItems[ogun];
-      if (aiItem) {
+      for (const aiItem of seciliItems[ogun]) {
         const mk = aiItem.makrolar ? parseMakrolar(aiItem.makrolar) : { protein: 0, karbonhidrat: 0, yag: 0 };
         const kal = aiItem.kalori ? parseInt(aiItem.kalori.match(/(\d+)/)?.[1] || "0", 10) : 0;
         ogunlerForHistory[ogun].push({
@@ -534,7 +543,7 @@ function BugunYiyeceklerimSection({
               placeholder={t.dashboard.manualFoodPlaceholder}
               disabled={addLoading}
               className={cn(
-                "flex-1 rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground",
+                "flex-1 rounded-lg border bg-background px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground",
                 "focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 addError ? "border-red-300 dark:border-red-700" : "border-border"
@@ -543,104 +552,87 @@ function BugunYiyeceklerimSection({
             <button
               onClick={handleAnalyze}
               disabled={!addInput.trim() || addLoading}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {addLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               <span className="hidden sm:inline">{addLoading ? t.dashboard.manualFoodAnalyzing : t.dashboard.manualFoodAdd}</span>
             </button>
           </div>
 
-          {/* Porsiyon seçimi - açılır/kapanır */}
-          <div className="mt-3 rounded-lg border border-violet-100 bg-white/60 dark:border-violet-900 dark:bg-violet-950/20 overflow-hidden">
-            <button
-              onClick={() => setPortionOpen(!portionOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 hover:bg-violet-50/50 dark:hover:bg-violet-950/30 transition-colors"
-            >
-              <span className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                📏 {t.dashboard.portionLabel}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-                  {portionAmount} {t.dashboard[BIRIM_TRANSLATION_KEYS[portionUnit] as keyof typeof t.dashboard]}
-                </span>
-                {portionOpen ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+          {/* Porsiyon seçimi */}
+          <div className="mt-3 rounded-lg border border-violet-100 bg-white/60 p-3 dark:border-violet-900 dark:bg-violet-950/20">
+            <p className="mb-2 text-sm font-semibold text-muted-foreground">📏 {t.dashboard.portionLabel}</p>
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="flex items-center rounded-lg border border-border bg-background">
+                <button
+                  onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
+                  className="px-3 py-2 text-base font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
+                  disabled={portionAmount <= 0.5}
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  value={portionAmount}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) setPortionAmount(val);
+                  }}
+                  className="w-16 border-x border-border bg-transparent px-1 py-2 text-center text-base font-semibold text-foreground focus:outline-none"
+                  min="0.5"
+                  step="0.5"
+                />
+                <button
+                  onClick={() => setPortionAmount(portionAmount + 0.5)}
+                  className="px-3 py-2 text-base font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
+                >
+                  +
+                </button>
               </div>
-            </button>
-            {portionOpen && (
-              <div className="px-3 pb-3 pt-1 border-t border-violet-100 dark:border-violet-900">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center rounded-lg border border-border bg-background">
-                    <button
-                      onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
-                      className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
-                      disabled={portionAmount <= 0.5}
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      value={portionAmount}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        if (!isNaN(val) && val > 0) setPortionAmount(val);
-                      }}
-                      className="w-14 border-x border-border bg-transparent px-1 py-1.5 text-center text-sm font-semibold text-foreground focus:outline-none"
-                      min="0.5"
-                      step="0.5"
-                    />
-                    <button
-                      onClick={() => setPortionAmount(portionAmount + 0.5)}
-                      className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <div className="flex gap-1">
-                    {[0.5, 1, 1.5, 2, 3].map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => setPortionAmount(val)}
-                        className={cn(
-                          "rounded-md px-2 py-1.5 text-xs font-medium transition-all",
-                          portionAmount === val
-                            ? "bg-violet-600 text-white shadow-sm"
-                            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        {val}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
-                    const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
-                    const label = t.dashboard[translationKey] || key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setPortionUnit(key)}
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all",
-                          portionUnit === key
-                            ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
-                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <span className="text-[11px]">{icon}</span>
-                        {label}
-                      </button>
-                    );
-                  })}
+              <div className="flex gap-1">
+                {[0.5, 1, 1.5, 2, 3].map((val) => (
                   <button
-                    onClick={() => setShowAllUnits(!showAllUnits)}
-                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
+                    key={val}
+                    onClick={() => setPortionAmount(val)}
+                    className={cn(
+                      "rounded-md px-2.5 py-2 text-sm font-medium transition-all",
+                      portionAmount === val
+                        ? "bg-violet-600 text-white shadow-sm"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
                   >
-                    {showAllUnits ? "▲ Daha az" : `▼ +${BIRIM_KATEGORILERI.length - 8}`}
+                    {val}
                   </button>
-                </div>
+                ))}
               </div>
-            )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
+                const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
+                const label = t.dashboard[translationKey] || key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setPortionUnit(key)}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
+                      portionUnit === key
+                        ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
+                        : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <span>{icon}</span>
+                    {label}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setShowAllUnits(!showAllUnits)}
+                className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
+              >
+                {showAllUnits ? "▲ Daha az" : `▼ +${BIRIM_KATEGORILERI.length - 8}`}
+              </button>
+            </div>
           </div>
 
           {addError && <p className="mt-2 text-xs text-red-500">{addError}</p>}
@@ -699,10 +691,10 @@ function BugunYiyeceklerimSection({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {ogunler.map(({ key, label, icon }) => {
-          const aiItem = seciliItems[key];
+          const aiItems = seciliItems[key];
           const manuelItems = manuelLoaded ? manuelOgunYemekleri[key] : [];
           const colors = OGUN_COLORS[key];
-          const hasContent = aiItem || manuelItems.length > 0;
+          const hasContent = aiItems.length > 0 || manuelItems.length > 0;
 
           return (
             <div
@@ -718,26 +710,29 @@ function BugunYiyeceklerimSection({
                 <span className="text-xs font-medium text-muted-foreground">
                   {icon} {label}
                 </span>
-                {aiItem && (
-                  <button
-                    onClick={() => onRemove(key)}
-                    className="rounded p-0.5 text-muted-foreground transition hover:text-red-500"
-                    title={t.common.delete}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                )}
               </div>
 
-              {aiItem && (
-                <div className="mb-1">
-                  <p className="font-medium text-foreground line-clamp-1">{aiItem.baslik}</p>
-                  {aiItem.kalori && <p className="text-xs text-foreground/80">🔥 {aiItem.kalori}</p>}
+              {aiItems.length > 0 && (
+                <div className="space-y-1 mb-1">
+                  {aiItems.map((aiItem) => (
+                    <div key={aiItem.id} className="group flex items-start justify-between gap-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground line-clamp-1">{aiItem.baslik}</p>
+                        {aiItem.kalori && <p className="text-xs text-foreground/80">🔥 {aiItem.kalori}</p>}
+                      </div>
+                      <button
+                        onClick={() => onRemove(key, aiItem.id)}
+                        className="mt-0.5 flex-shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:text-red-500"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
               {manuelItems.length > 0 && (
-                <div className={cn(aiItem ? "mt-2 border-t border-current/10 pt-2" : "")}>
+                <div className={cn(aiItems.length > 0 ? "mt-2 border-t border-current/10 pt-2" : "")}>
                   {manuelItems.map((my) => (
                     <div key={my.id} className="group flex items-start justify-between gap-1 mb-1 last:mb-0">
                       <div className="min-w-0 flex-1">
@@ -860,9 +855,7 @@ export function YemekStickyNotesSection({ content }: { content: string }) {
     setSeciliYemekler((prev) => {
       const updated = { ...prev };
       for (const ogun of ["kahvalti", "ogle", "aksam", "ara"] as OgunTipi[]) {
-        if (prev[ogun] === id) {
-          updated[ogun] = null;
-        }
+        updated[ogun] = prev[ogun].filter((sid) => sid !== id);
       }
       if (userId) saveSelectedMeals(userId, updated);
       return updated;
@@ -879,15 +872,22 @@ export function YemekStickyNotesSection({ content }: { content: string }) {
 
   const handleSelect = useCallback((item: YemekItem) => {
     setSeciliYemekler((prev) => {
-      const updated = { ...prev, [item.ogun]: item.id };
+      const current = prev[item.ogun];
+      const isAlreadySelected = current.includes(item.id);
+      const updated = {
+        ...prev,
+        [item.ogun]: isAlreadySelected
+          ? current.filter((id) => id !== item.id)
+          : [...current, item.id],
+      };
       if (userId) saveSelectedMeals(userId, updated);
       return updated;
     });
   }, [userId]);
 
-  const handleRemoveSelection = useCallback((ogun: OgunTipi) => {
+  const handleRemoveSelection = useCallback((ogun: OgunTipi, id: string) => {
     setSeciliYemekler((prev) => {
-      const updated = { ...prev, [ogun]: null };
+      const updated = { ...prev, [ogun]: prev[ogun].filter((sid) => sid !== id) };
       if (userId) saveSelectedMeals(userId, updated);
       return updated;
     });
@@ -951,7 +951,7 @@ export function YemekStickyNotesSection({ content }: { content: string }) {
             onDelete={handleDelete}
             onAddToCalendar={handleAddToCalendar}
             onSelect={handleSelect}
-            selectedId={seciliYemekler.kahvalti}
+            selectedIds={seciliYemekler.kahvalti}
           />
           <MealSection
             title={ogunTitles.ogle}
@@ -960,7 +960,7 @@ export function YemekStickyNotesSection({ content }: { content: string }) {
             onDelete={handleDelete}
             onAddToCalendar={handleAddToCalendar}
             onSelect={handleSelect}
-            selectedId={seciliYemekler.ogle}
+            selectedIds={seciliYemekler.ogle}
           />
           <MealSection
             title={ogunTitles.aksam}
@@ -969,7 +969,7 @@ export function YemekStickyNotesSection({ content }: { content: string }) {
             onDelete={handleDelete}
             onAddToCalendar={handleAddToCalendar}
             onSelect={handleSelect}
-            selectedId={seciliYemekler.aksam}
+            selectedIds={seciliYemekler.aksam}
           />
           <MealSection
             title={ogunTitles.ara}
@@ -978,7 +978,7 @@ export function YemekStickyNotesSection({ content }: { content: string }) {
             onDelete={handleDelete}
             onAddToCalendar={handleAddToCalendar}
             onSelect={handleSelect}
-            selectedId={seciliYemekler.ara}
+            selectedIds={seciliYemekler.ara}
           />
         </div>
         <p className="mt-6 text-xs text-muted-foreground text-center">

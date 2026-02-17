@@ -159,6 +159,12 @@ export default function OnboardingPage() {
                 onChange={(e) =>
                   setValue(
                     currentStep.field,
+                    e.target.value || undefined
+                  )
+                }
+                onBlur={(e) =>
+                  setValue(
+                    currentStep.field,
                     e.target.value.trim() || undefined
                   )
                 }
@@ -173,6 +179,12 @@ export default function OnboardingPage() {
                 placeholder={currentStep.placeholder}
                 value={typeof rawValue === "string" ? rawValue : ""}
                 onChange={(e) =>
+                  setValue(
+                    currentStep.field,
+                    e.target.value || undefined
+                  )
+                }
+                onBlur={(e) =>
                   setValue(
                     currentStep.field,
                     e.target.value.trim() || undefined
@@ -210,6 +222,12 @@ export default function OnboardingPage() {
                     placeholder={currentStep.followUpPlaceholder}
                     value={typeof followUpValue === "string" ? followUpValue : ""}
                     onChange={(e) =>
+                      setValue(
+                        currentStep.followUpField!,
+                        e.target.value || undefined
+                      )
+                    }
+                    onBlur={(e) =>
                       setValue(
                         currentStep.followUpField!,
                         e.target.value.trim() || undefined

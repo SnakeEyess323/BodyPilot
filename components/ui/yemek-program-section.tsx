@@ -7,7 +7,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { parseYemekProgram, gruplaYemekler, type YemekItem, type OgunTipi } from "@/lib/parseYemekProgram";
 import { MealSection, OGUN_COLORS, useOgunTitles } from "@/components/ui/meal-sticky-note";
-import { type ManuelYemek, type ManuelOgunYemekleri, DEFAULT_MANUEL_OGUN, loadManuelOgunYemekler, saveManuelOgunYemekler } from "@/components/ui/manual-food-tracker";
+import { type ManuelYemek, type ManuelOgunYemekleri, type PorsiyonBirim, DEFAULT_MANUEL_OGUN, loadManuelOgunYemekler, saveManuelOgunYemekler, BIRIM_KATEGORILERI, BIRIM_TRANSLATION_KEYS } from "@/components/ui/manual-food-tracker";
 import { Trash2, Plus, Loader2, Check, X, TableProperties, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -330,6 +330,9 @@ function BugunYiyeceklerimSection({
   const [pendingYemek, setPendingYemek] = useState<ManuelYemek | null>(null);
   const [addedMessage, setAddedMessage] = useState<string | null>(null);
   const [gecmisOpen, setGecmisOpen] = useState(false);
+  const [portionAmount, setPortionAmount] = useState<number>(1);
+  const [portionUnit, setPortionUnit] = useState<PorsiyonBirim>("porsiyon");
+  const [showAllUnits, setShowAllUnits] = useState(false);
 
   const [manuelOgunYemekleri, setManuelOgunYemekleri] = useState<ManuelOgunYemekleri>(DEFAULT_MANUEL_OGUN);
   const [manuelLoaded, setManuelLoaded] = useState(false);
@@ -378,7 +381,7 @@ function BugunYiyeceklerimSection({
       const res = await fetch("/api/yemek-analiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ yemek: addInput.trim() }),
+        body: JSON.stringify({ yemek: addInput.trim(), miktar: portionAmount, birim: portionUnit }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -393,6 +396,8 @@ function BugunYiyeceklerimSection({
         karbonhidrat: data.karbonhidrat || 0,
         yag: data.yag || 0,
         saat: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
+        miktar: portionAmount,
+        birim: portionUnit,
       });
       setAddInput("");
     } catch (err) {
@@ -400,7 +405,7 @@ function BugunYiyeceklerimSection({
     } finally {
       setAddLoading(false);
     }
-  }, [addInput, addLoading, t]);
+  }, [addInput, addLoading, t, portionAmount, portionUnit]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAnalyze(); }
@@ -518,6 +523,7 @@ function BugunYiyeceklerimSection({
 
       {addFormOpen && (
         <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/50 p-4 dark:border-violet-800 dark:bg-violet-950/30">
+          {/* Yemek adı girişi */}
           <div className="flex gap-2">
             <input
               type="text"
@@ -543,6 +549,91 @@ function BugunYiyeceklerimSection({
             </button>
           </div>
 
+          {/* Porsiyon seçimi */}
+          <div className="mt-3 rounded-lg border border-violet-100 bg-white/60 p-3 dark:border-violet-900 dark:bg-violet-950/20">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground">{t.dashboard.portionLabel}</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              {/* Miktar seçimi */}
+              <div className="flex items-center rounded-lg border border-border bg-background">
+                <button
+                  onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
+                  className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
+                  disabled={portionAmount <= 0.5}
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  value={portionAmount}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) setPortionAmount(val);
+                  }}
+                  className="w-14 border-x border-border bg-transparent px-1 py-1.5 text-center text-sm font-semibold text-foreground focus:outline-none"
+                  min="0.5"
+                  step="0.5"
+                />
+                <button
+                  onClick={() => setPortionAmount(portionAmount + 0.5)}
+                  className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
+                >
+                  +
+                </button>
+              </div>
+              {/* Hızlı miktar butonları */}
+              <div className="flex gap-1">
+                {[0.5, 1, 1.5, 2, 3].map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => setPortionAmount(val)}
+                    className={cn(
+                      "rounded-md px-2 py-1.5 text-xs font-medium transition-all",
+                      portionAmount === val
+                        ? "bg-violet-600 text-white shadow-sm"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    {val}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Birim seçimi - popüler birimler */}
+            <div className="flex flex-wrap gap-1.5">
+              {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
+                const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
+                const label = t.dashboard[translationKey] || key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setPortionUnit(key)}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                      portionUnit === key
+                        ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
+                        : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <span className="text-[11px]">{icon}</span>
+                    {label}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setShowAllUnits(!showAllUnits)}
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
+              >
+                {showAllUnits ? "▲ Daha az" : `▼ +${BIRIM_KATEGORILERI.length - 8} birim`}
+              </button>
+            </div>
+            {/* Seçili porsiyon özeti */}
+            <div className="mt-2 text-xs text-muted-foreground">
+              📏 <span className="font-medium text-foreground">{portionAmount} {t.dashboard[BIRIM_TRANSLATION_KEYS[portionUnit] as keyof typeof t.dashboard]}</span>
+            </div>
+          </div>
+
           {addError && <p className="mt-2 text-xs text-red-500">{addError}</p>}
 
           {addedMessage && (
@@ -556,6 +647,11 @@ function BugunYiyeceklerimSection({
             <div className="mt-3">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="font-medium text-foreground">{pendingYemek.baslik}</span>
+                {pendingYemek.miktar && pendingYemek.birim && (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+                    📏 {pendingYemek.miktar} {t.dashboard[BIRIM_TRANSLATION_KEYS[pendingYemek.birim] as keyof typeof t.dashboard]}
+                  </span>
+                )}
                 <span className="rounded-full bg-violet-200/80 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-800/50 dark:text-violet-200">
                   🔥 {pendingYemek.kalori} kcal
                 </span>
@@ -637,7 +733,12 @@ function BugunYiyeceklerimSection({
                     <div key={my.id} className="group flex items-start justify-between gap-1 mb-1 last:mb-0">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground line-clamp-1">{my.baslik}</p>
-                        <p className="text-xs text-foreground/70">🔥 {my.kalori} kcal · P:{my.protein}g · K:{my.karbonhidrat}g</p>
+                        <p className="text-xs text-foreground/70">
+                          {my.miktar && my.birim && (
+                            <span className="mr-1">📏 {my.miktar} {t.dashboard[BIRIM_TRANSLATION_KEYS[my.birim] as keyof typeof t.dashboard]} ·</span>
+                          )}
+                          🔥 {my.kalori} kcal · P:{my.protein}g · K:{my.karbonhidrat}g
+                        </p>
                       </div>
                       <button
                         onClick={() => handleDeleteManuel(key, my.id)}

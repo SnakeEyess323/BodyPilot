@@ -1,12 +1,74 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Plus, Trash2, Loader2, UtensilsCrossed, Check } from "lucide-react";
+import { Plus, Trash2, Loader2, UtensilsCrossed, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { getUserStorageJSON, setUserStorageJSON } from "@/lib/user-storage";
 import type { OgunTipi } from "@/lib/parseYemekProgram";
+
+// Porsiyon birim tipleri
+export type PorsiyonBirim =
+  | "gram"
+  | "porsiyon"
+  | "tabak"
+  | "kase"
+  | "bardak"
+  | "su_bardagi"
+  | "cay_bardagi"
+  | "fincan"
+  | "dilim"
+  | "adet"
+  | "kasik"
+  | "tatli_kasigi"
+  | "cay_kasigi"
+  | "ml"
+  | "litre"
+  | "avuc"
+  | "paket";
+
+// Birim kategorileri - yemek türüne göre gruplandırılmış
+export const BIRIM_KATEGORILERI: { key: PorsiyonBirim; icon: string; category: "genel" | "hacim" | "olcu" | "katı" }[] = [
+  { key: "porsiyon", icon: "🍽️", category: "genel" },
+  { key: "tabak", icon: "🍛", category: "genel" },
+  { key: "kase", icon: "🥣", category: "genel" },
+  { key: "adet", icon: "🔢", category: "katı" },
+  { key: "dilim", icon: "🍕", category: "katı" },
+  { key: "bardak", icon: "🥛", category: "hacim" },
+  { key: "su_bardagi", icon: "💧", category: "hacim" },
+  { key: "cay_bardagi", icon: "🍵", category: "hacim" },
+  { key: "fincan", icon: "☕", category: "hacim" },
+  { key: "kasik", icon: "🥄", category: "olcu" },
+  { key: "tatli_kasigi", icon: "🥄", category: "olcu" },
+  { key: "cay_kasigi", icon: "🥄", category: "olcu" },
+  { key: "avuc", icon: "✋", category: "olcu" },
+  { key: "gram", icon: "⚖️", category: "olcu" },
+  { key: "ml", icon: "💧", category: "hacim" },
+  { key: "litre", icon: "🫗", category: "hacim" },
+  { key: "paket", icon: "📦", category: "katı" },
+];
+
+// Birim adlarını çeviri key'lerine eşleme
+export const BIRIM_TRANSLATION_KEYS: Record<PorsiyonBirim, string> = {
+  gram: "unitGram",
+  porsiyon: "unitPorsiyon",
+  tabak: "unitTabak",
+  kase: "unitKase",
+  bardak: "unitBardak",
+  su_bardagi: "unitSuBardagi",
+  cay_bardagi: "unitCayBardagi",
+  fincan: "unitFincan",
+  dilim: "unitDilim",
+  adet: "unitAdet",
+  kasik: "unitKasik",
+  tatli_kasigi: "unitTatliKasigi",
+  cay_kasigi: "unitCayKasigi",
+  ml: "unitMl",
+  litre: "unitLitre",
+  avuc: "unitAvuc",
+  paket: "unitPaket",
+};
 
 // Manuel eklenen yemek tipi
 export interface ManuelYemek {
@@ -17,6 +79,8 @@ export interface ManuelYemek {
   karbonhidrat: number;
   yag: number;
   saat: string; // ekleme saati
+  miktar?: number; // porsiyon miktarı
+  birim?: PorsiyonBirim; // porsiyon birimi
 }
 
 // Öğün bazlı manuel yemekler
@@ -90,6 +154,9 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
   const [error, setError] = useState<string | null>(null);
   const [pendingYemek, setPendingYemek] = useState<ManuelYemek | null>(null);
   const [addedMessage, setAddedMessage] = useState<string | null>(null);
+  const [portionAmount, setPortionAmount] = useState<number>(1);
+  const [portionUnit, setPortionUnit] = useState<PorsiyonBirim>("porsiyon");
+  const [showAllUnits, setShowAllUnits] = useState(false);
 
   // Standalone mode state
   const [ogunYemekleri, setOgunYemekleri] = useState<ManuelOgunYemekleri>(DEFAULT_MANUEL_OGUN);
@@ -125,7 +192,7 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
       const res = await fetch("/api/yemek-analiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ yemek: input.trim() }),
+        body: JSON.stringify({ yemek: input.trim(), miktar: portionAmount, birim: portionUnit }),
       });
 
       if (!res.ok) {
@@ -146,6 +213,8 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
           hour: "2-digit",
           minute: "2-digit",
         }),
+        miktar: portionAmount,
+        birim: portionUnit,
       };
 
       setPendingYemek(yeniYemek);
@@ -157,7 +226,7 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
     } finally {
       setLoading(false);
     }
-  }, [input, loading, t]);
+  }, [input, loading, t, portionAmount, portionUnit]);
 
   // Enter tuşu
   const handleKeyDown = useCallback(
@@ -278,6 +347,91 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
         </button>
       </div>
 
+      {/* Porsiyon seçimi */}
+      <div className="mb-4 rounded-lg border border-violet-200/50 bg-violet-50/30 p-3 dark:border-violet-900/50 dark:bg-violet-950/10">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground">{t.dashboard.portionLabel}</span>
+        </div>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center rounded-lg border border-border bg-background">
+            <button
+              onClick={() => setPortionAmount(Math.max(0.5, portionAmount - 0.5))}
+              className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-l-lg hover:bg-muted"
+              disabled={portionAmount <= 0.5}
+            >
+              −
+            </button>
+            <input
+              type="number"
+              value={portionAmount}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) setPortionAmount(val);
+              }}
+              className="w-14 border-x border-border bg-transparent px-1 py-1.5 text-center text-sm font-semibold text-foreground focus:outline-none"
+              min="0.5"
+              step="0.5"
+            />
+            <button
+              onClick={() => setPortionAmount(portionAmount + 0.5)}
+              className="px-2.5 py-1.5 text-sm font-bold text-muted-foreground hover:text-foreground transition rounded-r-lg hover:bg-muted"
+            >
+              +
+            </button>
+          </div>
+          <div className="flex gap-1">
+            {[0.5, 1, 1.5, 2, 3].map((val) => (
+              <button
+                key={val}
+                onClick={() => setPortionAmount(val)}
+                className={cn(
+                  "rounded-md px-2 py-1.5 text-xs font-medium transition-all",
+                  portionAmount === val
+                    ? "bg-violet-600 text-white shadow-sm"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {(showAllUnits ? BIRIM_KATEGORILERI : BIRIM_KATEGORILERI.slice(0, 8)).map(({ key, icon }) => {
+            const translationKey = BIRIM_TRANSLATION_KEYS[key] as keyof typeof t.dashboard;
+            const label = t.dashboard[translationKey] || key;
+            return (
+              <button
+                key={key}
+                onClick={() => setPortionUnit(key)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all",
+                  portionUnit === key
+                    ? "bg-violet-600 text-white shadow-sm ring-2 ring-violet-300 dark:ring-violet-700"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span className="text-[11px]">{icon}</span>
+                {label}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setShowAllUnits(!showAllUnits)}
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 transition-all"
+          >
+            {showAllUnits ? (
+              <><ChevronUp className="h-3 w-3" /> Daha az</>
+            ) : (
+              <><ChevronDown className="h-3 w-3" /> +{BIRIM_KATEGORILERI.length - 8} birim</>
+            )}
+          </button>
+        </div>
+        <div className="mt-2 text-xs text-muted-foreground">
+          📏 <span className="font-medium text-foreground">{portionAmount} {t.dashboard[BIRIM_TRANSLATION_KEYS[portionUnit] as keyof typeof t.dashboard]}</span>
+        </div>
+      </div>
+
       {/* Hata mesajı */}
       {error && (
         <p className="mb-3 text-xs text-red-500">{error}</p>
@@ -298,6 +452,11 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
           <div className="mb-3">
             <p className="font-semibold text-foreground">{pendingYemek.baslik}</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {pendingYemek.miktar && pendingYemek.birim && (
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+                  📏 {pendingYemek.miktar} {t.dashboard[BIRIM_TRANSLATION_KEYS[pendingYemek.birim] as keyof typeof t.dashboard]}
+                </span>
+              )}
               <span className="inline-flex items-center rounded-full bg-violet-200/80 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-800/50 dark:text-violet-200">
                 🔥 {pendingYemek.kalori} {t.dashboard.manualFoodKcal}
               </span>
@@ -409,6 +568,9 @@ export function ManualFoodTracker({ embedded = false, onAddToOgun }: ManualFoodT
                           {yemek.baslik}
                         </p>
                         <p className="text-xs text-foreground/70">
+                          {yemek.miktar && yemek.birim && (
+                            <span className="mr-1">📏 {yemek.miktar} {t.dashboard[BIRIM_TRANSLATION_KEYS[yemek.birim] as keyof typeof t.dashboard]} ·</span>
+                          )}
                           🔥 {yemek.kalori} {t.dashboard.manualFoodKcal}
                         </p>
                       </div>

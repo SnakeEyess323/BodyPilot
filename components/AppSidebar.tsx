@@ -88,7 +88,7 @@ function SidebarLogo() {
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,
         }}
-        className="font-bold text-xl text-primary whitespace-pre"
+        className="font-bold text-2xl text-primary whitespace-pre"
         style={{ fontFamily: '"Cinematografica", sans-serif', letterSpacing: "0.08em" }}
       >
         BODYPILOT

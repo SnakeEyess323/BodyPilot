@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronDown, User, Moon, Sun, LogOut, Crown, Globe, Users, Check, Copy, Share2, Menu, X } from "lucide-react";
+import { ChevronDown, User, Moon, Sun, LogOut, Crown, Globe, Users, Check, Copy, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/context/LanguageContext";
@@ -15,35 +15,25 @@ import { generateReferralCode, getReferralLink, copyToClipboard, shareInvite } f
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [programsOpen, setProgramsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const { setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { user, signOut, loading: authLoading } = useAuth();
   const { isPro } = useSubscription();
 
-  const programsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const profileMobileRef = useRef<HTMLDivElement>(null);
 
-  // Close mobile menu on route change
   useEffect(() => {
-    setMobileMenuOpen(false);
-    setProgramsOpen(false);
     setProfileOpen(false);
     setLangOpen(false);
   }, [pathname]);
 
-  // Dışarı tıklandığında dropdown'ları kapat
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-
-      if (programsOpen && programsRef.current && !programsRef.current.contains(target)) {
-        setProgramsOpen(false);
-      }
 
       if (profileOpen) {
         const insideDesktop = profileRef.current && profileRef.current.contains(target);
@@ -57,11 +47,7 @@ export default function Navbar() {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [programsOpen, profileOpen]);
-
-  const navLink =
-    "rounded px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground";
-  const navLinkActive = "bg-accent text-foreground";
+  }, [profileOpen]);
 
   // Don't render navbar on landing and auth pages
   if (pathname === "/" || pathname === "/giris" || pathname === "/kayit") {
@@ -91,109 +77,8 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Nav Links - hidden on mobile */}
+        {/* Desktop - Profil + Ayarlar */}
         <div className="hidden md:flex items-center gap-1">
-          <Link
-            href="/dashboard"
-            className={`${navLink} ${pathname === "/dashboard" ? navLinkActive : ""}`}
-          >
-            {t.nav.dashboard}
-          </Link>
-
-          {/* Programlar Dropdown */}
-          <div className="relative" ref={programsRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setProgramsOpen(!programsOpen);
-                setProfileOpen(false);
-              }}
-              className={`${navLink} flex items-center gap-1 ${
-                pathname?.startsWith("/program") ? navLinkActive : ""
-              }`}
-            >
-              {t.nav.programs}
-              <ChevronDown className={cn("h-4 w-4 transition-transform", programsOpen && "rotate-180")} />
-            </button>
-            {programsOpen && (
-              <ul className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-lg border border-border bg-popover py-1 shadow-lg">
-                <li>
-                  <Link
-                    href="/program/kas-secici"
-                    className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
-                    onClick={() => setProgramsOpen(false)}
-                  >
-                    {t.nav.muscleSelector}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/program/egzersizler"
-                    className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
-                    onClick={() => setProgramsOpen(false)}
-                  >
-                    {t.nav.exerciseGallery}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/program/antrenman"
-                    className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
-                    onClick={() => setProgramsOpen(false)}
-                  >
-                    {t.nav.workoutProgram}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/program/yemek"
-                    className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
-                    onClick={() => setProgramsOpen(false)}
-                  >
-                    {t.nav.mealProgram}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/program/kilo-takip"
-                    className="block px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
-                    onClick={() => setProgramsOpen(false)}
-                  >
-                    {t.nav.weightTracking}
-                  </Link>
-                </li>
-              </ul>
-            )}
-          </div>
-
-          <Link
-            href="/challenge"
-            className={`${navLink} ${pathname?.startsWith("/challenge") ? navLinkActive : ""}`}
-          >
-            {t.nav.challenges}
-          </Link>
-
-          <Link
-            href="/fiyatlandirma"
-            className={`${navLink} ${pathname === "/fiyatlandirma" ? navLinkActive : ""}`}
-          >
-            {t.nav.pricing}
-          </Link>
-
-          <Link
-            href="/asistan"
-            className={`${navLink} ${pathname === "/asistan" ? navLinkActive : ""}`}
-          >
-            {t.nav.bodypilot}
-          </Link>
-
-          <Link
-            href="/iletisim"
-            className={`${navLink} ${pathname === "/iletisim" ? navLinkActive : ""}`}
-          >
-            {t.feedback.navTitle}
-          </Link>
-
           {/* Profil Butonu - Desktop */}
           <div className="relative ml-2 border-l border-border pl-3" ref={profileRef}>
             {user ? (
@@ -201,7 +86,6 @@ export default function Navbar() {
                 type="button"
                 onClick={() => {
                   setProfileOpen(!profileOpen);
-                  setProgramsOpen(false);
                   setLangOpen(false);
                 }}
                 className="flex items-center gap-2 rounded-full p-0.5 transition hover:ring-2 hover:ring-primary/30"
@@ -232,7 +116,6 @@ export default function Navbar() {
                   type="button"
                   onClick={() => {
                     setProfileOpen(!profileOpen);
-                    setProgramsOpen(false);
                     setLangOpen(false);
                   }}
                   className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-accent hover:text-foreground hover:ring-2 hover:ring-primary/30"
@@ -406,7 +289,6 @@ export default function Navbar() {
                 type="button"
                 onClick={() => {
                   setProfileOpen(!profileOpen);
-                  setMobileMenuOpen(false);
                 }}
                 className="flex items-center gap-1.5 rounded-full p-0.5 transition hover:ring-2 hover:ring-primary/30"
               >
@@ -430,7 +312,6 @@ export default function Navbar() {
                   type="button"
                   onClick={() => {
                     setProfileOpen(!profileOpen);
-                    setMobileMenuOpen(false);
                   }}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-accent hover:text-foreground"
                 >
@@ -528,99 +409,8 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Hamburger Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(!mobileMenuOpen);
-              setProfileOpen(false);
-              setProgramsOpen(false);
-            }}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition"
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
       </nav>
-
-      {/* Mobile Menu Panel */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="mx-auto max-w-6xl px-4 py-3 space-y-1">
-            <Link
-              href="/dashboard"
-              className={cn("block rounded-lg px-4 py-3 text-sm font-medium transition", pathname === "/dashboard" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-            >
-              {t.nav.dashboard}
-            </Link>
-
-            {/* Programs - expanded list on mobile */}
-            <div className="space-y-1">
-              <p className="px-4 pt-2 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t.nav.programs}
-              </p>
-              <Link
-                href="/program/kas-secici"
-                className={cn("block rounded-lg px-4 py-2.5 text-sm font-medium transition pl-8", pathname === "/program/kas-secici" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-              >
-                {t.nav.muscleSelector}
-              </Link>
-              <Link
-                href="/program/egzersizler"
-                className={cn("block rounded-lg px-4 py-2.5 text-sm font-medium transition pl-8", pathname === "/program/egzersizler" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-              >
-                {t.nav.exerciseGallery}
-              </Link>
-              <Link
-                href="/program/antrenman"
-                className={cn("block rounded-lg px-4 py-2.5 text-sm font-medium transition pl-8", pathname === "/program/antrenman" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-              >
-                {t.nav.workoutProgram}
-              </Link>
-              <Link
-                href="/program/yemek"
-                className={cn("block rounded-lg px-4 py-2.5 text-sm font-medium transition pl-8", pathname === "/program/yemek" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-              >
-                {t.nav.mealProgram}
-              </Link>
-              <Link
-                href="/program/kilo-takip"
-                className={cn("block rounded-lg px-4 py-2.5 text-sm font-medium transition pl-8", pathname === "/program/kilo-takip" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-              >
-                {t.nav.weightTracking}
-              </Link>
-            </div>
-
-            <Link
-              href="/challenge"
-              className={cn("block rounded-lg px-4 py-3 text-sm font-medium transition", pathname?.startsWith("/challenge") ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-            >
-              {t.nav.challenges}
-            </Link>
-
-            <Link
-              href="/fiyatlandirma"
-              className={cn("block rounded-lg px-4 py-3 text-sm font-medium transition", pathname === "/fiyatlandirma" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-            >
-              {t.nav.pricing}
-            </Link>
-
-            <Link
-              href="/asistan"
-              className={cn("block rounded-lg px-4 py-3 text-sm font-medium transition", pathname === "/asistan" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-            >
-              {t.nav.bodypilot}
-            </Link>
-
-            <Link
-              href="/iletisim"
-              className={cn("block rounded-lg px-4 py-3 text-sm font-medium transition", pathname === "/iletisim" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
-            >
-              {t.feedback.navTitle}
-            </Link>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import HoverGradientNavBar from "@/components/ui/hover-gradient-nav-bar";
 import OnboardingGuard from "@/components/OnboardingGuard";
 import ProfilProvider from "@/components/ProfilProvider";
 import { HaftalikProgramProvider } from "@/context/HaftalikProgramContext";
@@ -48,7 +49,8 @@ export default function RootLayout({
                           <FavoriYemekProvider>
                             <OnboardingGuard>
                               <Navbar />
-                              <main>{children}</main>
+                              <main className="pb-20 md:pb-24">{children}</main>
+                              <HoverGradientNavBar />
                               <BadgePopup />
                             </OnboardingGuard>
                           </FavoriYemekProvider>

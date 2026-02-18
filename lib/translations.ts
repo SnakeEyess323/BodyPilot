@@ -14,7 +14,7 @@ export const translations = {
       dashboard: "Ana Sayfa",
       programs: "Programlar",
       pricing: "Fiyatlar",
-      bodypilot: "BodyPilot",
+      bodypilot: "BodyPilot AI Koçun",
       settings: "Ayarlar",
       profile: "Profil",
       theme: "Tema",

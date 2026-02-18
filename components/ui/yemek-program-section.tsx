@@ -590,7 +590,7 @@ function BugunYiyeceklerimSection({
                 </button>
               </div>
               <div className="flex gap-1">
-                {[0.5, 1, 1.5, 2, 3].map((val) => (
+                {[0.5, 1, 1.5, 2].map((val) => (
                   <button
                     key={val}
                     onClick={() => setPortionAmount(val)}

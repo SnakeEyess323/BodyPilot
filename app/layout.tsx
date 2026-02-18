@@ -17,6 +17,10 @@ import { ChallengeProvider } from "@/context/ChallengeContext";
 export const metadata: Metadata = {
   title: "BodyPilot - AI Fitness Coach",
   description: "Your AI-powered personal fitness and nutrition assistant",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

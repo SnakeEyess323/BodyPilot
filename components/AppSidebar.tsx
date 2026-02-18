@@ -45,12 +45,12 @@ export default function AppSidebar({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden">
       <Sidebar open={open} setOpen={setOpen}>
-        <SidebarBody className="justify-between gap-6 border-r border-border bg-background/95 dark:bg-background/95">
+        <SidebarBody className="justify-between gap-6 border-r border-border bg-background">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             <SidebarLogo />
-            <div className="mt-6 flex flex-col gap-1">
+            <div className="mt-6 flex flex-col gap-0.5">
               <NavLinks pathname={pathname} />
             </div>
           </div>
@@ -68,13 +68,14 @@ export default function AppSidebar({ children }: { children: React.ReactNode }) 
 function SidebarLogo() {
   const { open, animate } = useSidebar();
   return (
-    <Link href="/dashboard" className="flex items-center gap-2.5 py-1 px-1 relative z-20">
+    <Link href="/dashboard" className="flex items-center gap-3 py-2 px-2 relative z-20">
       <Image
         src="/logo.png"
         alt="BodyPilot"
-        width={32}
-        height={32}
-        className="h-8 w-8 rounded-lg flex-shrink-0"
+        width={36}
+        height={36}
+        className="rounded-lg flex-shrink-0"
+        style={{ width: 36, height: 36, minWidth: 36, minHeight: 36 }}
       />
       <motion.span
         animate={{
@@ -92,18 +93,19 @@ function SidebarLogo() {
 
 function NavLinks({ pathname }: { pathname: string }) {
   const { t } = useLanguage();
+  const { setOpen } = useSidebar();
 
   const links = [
-    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.workoutProgram, href: "/program/antrenman", icon: <Dumbbell className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.mealProgram, href: "/program/yemek", icon: <Utensils className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.weightTracking, href: "/program/kilo-takip", icon: <Weight className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.muscleSelector, href: "/program/kas-secici", icon: <Crosshair className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.exerciseGallery, href: "/program/egzersizler", icon: <BookOpen className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.challenges, href: "/challenge", icon: <Trophy className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.bodypilot, href: "/asistan", icon: <MessageSquare className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.nav.pricing, href: "/fiyatlandirma", icon: <CreditCard className="h-5 w-5 flex-shrink-0" /> },
-    { label: t.feedback.navTitle, href: "/iletisim", icon: <MessageCircle className="h-5 w-5 flex-shrink-0" /> },
+    { label: t.nav.dashboard, href: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { label: t.nav.workoutProgram, href: "/program/antrenman", icon: <Dumbbell className="h-5 w-5" /> },
+    { label: t.nav.mealProgram, href: "/program/yemek", icon: <Utensils className="h-5 w-5" /> },
+    { label: t.nav.weightTracking, href: "/program/kilo-takip", icon: <Weight className="h-5 w-5" /> },
+    { label: t.nav.muscleSelector, href: "/program/kas-secici", icon: <Crosshair className="h-5 w-5" /> },
+    { label: t.nav.exerciseGallery, href: "/program/egzersizler", icon: <BookOpen className="h-5 w-5" /> },
+    { label: t.nav.challenges, href: "/challenge", icon: <Trophy className="h-5 w-5" /> },
+    { label: t.nav.bodypilot, href: "/asistan", icon: <MessageSquare className="h-5 w-5" /> },
+    { label: t.nav.pricing, href: "/fiyatlandirma", icon: <CreditCard className="h-5 w-5" /> },
+    { label: t.feedback.navTitle, href: "/iletisim", icon: <MessageCircle className="h-5 w-5" /> },
   ];
 
   return (
@@ -113,6 +115,7 @@ function NavLinks({ pathname }: { pathname: string }) {
           key={link.href}
           link={link}
           active={pathname === link.href || pathname?.startsWith(link.href + "/")}
+          onClick={() => setOpen(false)}
         />
       ))}
     </>
@@ -137,7 +140,7 @@ function SidebarSettings() {
         <button
           onClick={() => setTheme("light")}
           className={cn(
-            "flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition",
+            "flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition",
             resolvedTheme === "light"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
@@ -148,7 +151,7 @@ function SidebarSettings() {
         <button
           onClick={() => setTheme("dark")}
           className={cn(
-            "flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition",
+            "flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition",
             resolvedTheme === "dark"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
@@ -189,10 +192,10 @@ function SidebarSettings() {
 }
 
 function SidebarProfile() {
-  const { open, animate } = useSidebar();
+  const { open, animate, setOpen } = useSidebar();
   const { user, signOut, loading: authLoading } = useAuth();
   const { isPro } = useSubscription();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   const userInitials = user?.user_metadata?.full_name
     ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
@@ -208,52 +211,65 @@ function SidebarProfile() {
         link={{
           label: "Giriş Yap",
           href: "/giris",
-          icon: <User className="h-5 w-5 flex-shrink-0" />,
+          icon: <User className="h-5 w-5" />,
         }}
+        onClick={() => setOpen(false)}
       />
     );
   }
 
+  const profileIcon = userAvatarUrl ? (
+    <Image
+      src={userAvatarUrl}
+      alt={userName}
+      width={32}
+      height={32}
+      className="rounded-full object-cover flex-shrink-0"
+      style={{ width: 32, height: 32, minWidth: 32, minHeight: 32 }}
+    />
+  ) : (
+    <div
+      className="flex items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground flex-shrink-0"
+      style={{ width: 32, height: 32, minWidth: 32, minHeight: 32 }}
+    >
+      {userInitials}
+    </div>
+  );
+
   return (
     <div className="space-y-1">
       <InviteButton />
-      <SidebarLink
-        link={{
-          label: userName,
-          href: "/profil",
-          icon: userAvatarUrl ? (
-            <Image src={userAvatarUrl} alt={userName} width={28} height={28} className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
-          ) : (
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex-shrink-0">
-              {userInitials}
-            </div>
-          ),
-        }}
-      />
-      <motion.div
-        animate={{
-          display: animate ? (open ? "flex" : "none") : "flex",
-          opacity: animate ? (open ? 1 : 0) : 1,
-        }}
-        className="flex items-center gap-2 px-1"
+      <Link
+        href="/profil"
+        onClick={() => setOpen(false)}
+        className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-accent transition-colors group/sidebar"
       >
-        {isPro && (
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300">
-            <Crown className="h-3 w-3" /> PRO
+        {profileIcon}
+        <motion.div
+          animate={{
+            display: animate ? (open ? "flex" : "none") : "flex",
+            opacity: animate ? (open ? 1 : 0) : 1,
+          }}
+          className="flex items-center gap-2 min-w-0"
+        >
+          <span className="text-sm font-medium text-foreground truncate group-hover/sidebar:translate-x-1 transition duration-150">
+            {userName}
           </span>
-        )}
-        {!isPro && (
-          <Link
-            href="/fiyatlandirma"
-            className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/50 transition"
-          >
-            <Crown className="h-3 w-3" /> Pro
-          </Link>
-        )}
-      </motion.div>
+          {isPro && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300 flex-shrink-0">
+              <Crown className="h-3 w-3" /> PRO
+            </span>
+          )}
+          {!isPro && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 text-[10px] font-bold text-violet-600 dark:text-violet-400 flex-shrink-0">
+              <Crown className="h-3 w-3" /> Pro
+            </span>
+          )}
+        </motion.div>
+      </Link>
       <button
         onClick={async () => { await signOut(); }}
-        className="flex w-full items-center gap-2 py-2 px-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        className="flex w-full items-center gap-3 py-2 px-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
       >
         <LogOut className="h-5 w-5 flex-shrink-0" />
         <motion.span

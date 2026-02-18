@@ -187,6 +187,13 @@ export default function Navbar() {
             {t.nav.bodypilot}
           </Link>
 
+          <Link
+            href="/iletisim"
+            className={`${navLink} ${pathname === "/iletisim" ? navLinkActive : ""}`}
+          >
+            {t.feedback.navTitle}
+          </Link>
+
           {/* Profil Butonu - Desktop */}
           <div className="relative ml-2 border-l border-border pl-3" ref={profileRef}>
             {user ? (
@@ -603,6 +610,13 @@ export default function Navbar() {
               className={cn("block rounded-lg px-4 py-3 text-sm font-medium transition", pathname === "/asistan" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
             >
               {t.nav.bodypilot}
+            </Link>
+
+            <Link
+              href="/iletisim"
+              className={cn("block rounded-lg px-4 py-3 text-sm font-medium transition", pathname === "/iletisim" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}
+            >
+              {t.feedback.navTitle}
             </Link>
           </div>
         </div>

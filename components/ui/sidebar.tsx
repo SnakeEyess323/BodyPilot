@@ -86,11 +86,13 @@ export const DesktopSidebar = ({
   return (
     <motion.div
       className={cn(
-        "h-full px-3 py-4 hidden md:flex md:flex-col w-[300px] flex-shrink-0 overflow-hidden",
+        "h-full py-4 hidden md:flex md:flex-col flex-shrink-0 overflow-hidden",
         className
       )}
       animate={{
-        width: animate ? (open ? "300px" : "56px") : "300px",
+        width: animate ? (open ? "280px" : "64px") : "280px",
+        paddingLeft: animate ? (open ? "16px" : "8px") : "16px",
+        paddingRight: animate ? (open ? "16px" : "8px") : "16px",
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       onMouseEnter={() => setOpen(true)}
@@ -174,7 +176,8 @@ export const SidebarLink = ({
       href={link.href}
       onClick={onClick}
       className={cn(
-        "flex items-center justify-start gap-3 group/sidebar py-2 px-1.5 rounded-lg transition-colors",
+        "flex items-center group/sidebar py-2 rounded-lg transition-colors",
+        open ? "justify-start gap-3 px-3" : "justify-center px-0",
         active
           ? "bg-primary/10 text-primary"
           : "hover:bg-accent text-muted-foreground hover:text-foreground",
@@ -182,7 +185,7 @@ export const SidebarLink = ({
       )}
       {...props}
     >
-      <span className="flex-shrink-0">{link.icon}</span>
+      <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">{link.icon}</span>
       <motion.span
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",

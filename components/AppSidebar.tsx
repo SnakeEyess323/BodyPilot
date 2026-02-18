@@ -68,7 +68,13 @@ export default function AppSidebar({ children }: { children: React.ReactNode }) 
 function SidebarLogo() {
   const { open, animate } = useSidebar();
   return (
-    <Link href="/dashboard" className="flex items-center gap-3 py-2 px-1 relative z-20">
+    <Link
+      href="/dashboard"
+      className={cn(
+        "flex items-center py-2 relative z-20",
+        open ? "gap-3 px-3 justify-start" : "justify-center px-0"
+      )}
+    >
       <Image
         src="/logo.png"
         alt="BodyPilot"
@@ -242,7 +248,10 @@ function SidebarProfile() {
       <Link
         href="/profil"
         onClick={() => setOpen(false)}
-        className="flex items-center gap-3 py-2 px-1 rounded-lg hover:bg-accent transition-colors group/sidebar"
+        className={cn(
+          "flex items-center py-2 rounded-lg hover:bg-accent transition-colors group/sidebar",
+          open ? "gap-3 px-3 justify-start" : "justify-center px-0"
+        )}
       >
         {profileIcon}
         <motion.div
@@ -269,7 +278,10 @@ function SidebarProfile() {
       </Link>
       <button
         onClick={async () => { await signOut(); }}
-        className="flex w-full items-center gap-3 py-2 px-1.5 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        className={cn(
+          "flex w-full items-center py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors",
+          open ? "gap-3 px-3 justify-start" : "justify-center px-0"
+        )}
       >
         <LogOut className="h-5 w-5 flex-shrink-0" />
         <motion.span
